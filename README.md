@@ -133,5 +133,3 @@ If you're passionate about AI in education, student empowerment, or scaling inno
 Aptiverse is more than just a school tool—it's a **resilient platform for growth**, ensuring no student is left behind due to lack of access, support, or personalized guidance.
 
 ---
-
-Let me know if you’d like this saved as a file or want different versions (like a shorter GitHub description or a landing page version).
