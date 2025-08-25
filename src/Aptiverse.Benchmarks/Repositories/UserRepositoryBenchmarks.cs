@@ -1,4 +1,5 @@
 ﻿using Aptiverse.Domain.Models;
+using Aptiverse.Domain.Models.Users;
 using Aptiverse.Infrastructure.Data;
 using BenchmarkDotNet.Attributes;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ public class UserRepositoryBenchmarks
         _context = new ApplicationDbContext(options);
 
         _context.Database.EnsureCreated();
-        _context.Users.Add(new User
+        _context.Users.Add(new ApplicationUser
         {
             Id = 1,
             FirstName = "Test",
@@ -31,7 +32,7 @@ public class UserRepositoryBenchmarks
     [Benchmark]
     public async Task AddUser_LINQ()
     {
-        _context.Set<User>().Add(new User
+        _context.Set<ApplicationUser>().Add(new ApplicationUser
         {
             FirstName = "John",
             LastName = "Doe",
@@ -44,7 +45,7 @@ public class UserRepositoryBenchmarks
     [Benchmark]
     public async Task AddUser_RawSQL()
     {
-        var user = new User
+        var user = new ApplicationUser
         {
             FirstName = "John",
             LastName = "Cena",
@@ -88,13 +89,13 @@ public class UserRepositoryBenchmarks
     }
 
     [Benchmark]
-    public async Task<User?> GetUser_LINQ()
+    public async Task<ApplicationUser?> GetUser_LINQ()
     {
-        return await _context.Set<User>().FindAsync(1);
+        return await _context.Set<ApplicationUser>().FindAsync(1);
     }
 
     [Benchmark]
-    public async Task<User?> GetUser_RawSQL()
+    public async Task<ApplicationUser?> GetUser_RawSQL()
     {
         return await _context.Users
             .FromSqlRaw("SELECT * FROM Users WHERE Id = 1")
