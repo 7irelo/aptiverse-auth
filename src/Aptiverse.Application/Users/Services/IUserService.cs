@@ -5,9 +5,9 @@ namespace Aptiverse.Application.Users.Services
     public interface IUserService
     {
         Task<UserDto> CreateUserAsync(UserDto userDto);
-        Task<UserDto> GetOneUserAsync(long id);
+        Task<UserDto> GetOneUserAsync(string id);
         Task<IEnumerable<UserDto>> GetManyUsersAsync(string filter);
-        Task<UserDto> UpdateUserAsync(long id, UserDto userDto);
-        Task DeleteUserAsync(long id);
+        Task<UserDto> UpdateUserAsync(string id, UserDto userDto);
+        Task DeleteUserAsync(string id);
     }
 }
