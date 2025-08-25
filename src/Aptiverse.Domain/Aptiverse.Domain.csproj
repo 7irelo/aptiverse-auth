@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.19" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\Auth\" />
+  </ItemGroup>
+
 </Project>
