@@ -1,20 +1,19 @@
 ﻿using Aptiverse.Application.AI.Dtos;
-using Microsoft.AspNetCore.Connections;
 using Microsoft.Extensions.Configuration;
-using System.Text;
 using RabbitMQ.Client;
+using System.Text;
 using System.Text.Json;
 
 namespace Aptiverse.Application.AI.Services
 {
-    public class AiTaskService(IConfiguration config) : IAiTaskService
+    public class ModelTaskService(IConfiguration config) : IModelTaskService
     {
         private readonly string _host = config["RabbitMQ:Host"];
         private readonly string _username = config["RabbitMQ:Username"];
         private readonly string _password = config["RabbitMQ:Password"];
         private readonly string _queue = config["RabbitMQ:QueueName"] ?? "ai-tasks";
 
-        public Task SendTaskToQueueAsync(AiTaskPayloadDto taskPayload)
+        public Task SendTaskToQueueAsync(ModelTaskPayloadDto taskPayload)
         {
             var factory = new ConnectionFactory
             {

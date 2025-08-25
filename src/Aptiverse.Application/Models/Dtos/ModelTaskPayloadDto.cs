@@ -1,6 +1,6 @@
 ﻿namespace Aptiverse.Application.AI.Dtos
 {
-    public class AiTaskPayloadDto
+    public class ModelTaskPayloadDto
     {
         public string TaskId { get; set; } = Guid.NewGuid().ToString();
         public string UserId { get; set; } = string.Empty;
