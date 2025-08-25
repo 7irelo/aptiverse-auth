@@ -1,8 +1,7 @@
-﻿using Aptiverse.Application.UserCategories.Dtos;
-using Aptiverse.Application.Users.Dtos;
-using Aptiverse.Application.UserTypes.Dtos;
-using Aptiverse.Domain.Models;
+﻿using Aptiverse.Application.Users.Dtos;
+using Aptiverse.Domain.Models.Users;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 
 namespace Aptiverse.Application.Users.Mapping
 {
@@ -10,9 +9,17 @@ namespace Aptiverse.Application.Users.Mapping
     {
         public UserProfile()
         {
-            CreateMap<UserDto, User>().ForMember(dest => dest.Id, opt => opt.MapFrom(_ => 0)).ReverseMap();
-            CreateMap<UserType, UserTypeDto>().ReverseMap();
-            CreateMap<UserCategory, UserCategoryDto>().ReverseMap();
+            CreateMap<ApplicationUser, UserDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber));
+
+            CreateMap<UserDto, ApplicationUser>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber));
         }
     }
 }
