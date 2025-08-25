@@ -1,9 +1,7 @@
 ﻿using Aptiverse.Application;
-using Aptiverse.Application.AI.Services;
-using Aptiverse.Application.Users.Services;
-using Aptiverse.Domain.Interfaces;
 using Aptiverse.Infrastructure.Data;
-using Aptiverse.Infrastructure.Repositories;
+using Aptiverse.Infrastructure.RateLimiting.Aptiverse.Infrastructure.RateLimiting;
+using Aptiverse.Infrastructure.ServiceRegistartion;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,12 +16,10 @@ namespace Aptiverse.Infrastructure
                 options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
-
             services.AddAutoMapper(typeof(IAssemblyMarker).Assembly);
-
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IAiTaskService, AiTaskService>();
+            services.AddApplicationServices();
+            services.AddRateLimitingServices();
+            services.AddLogging();
 
             return services;
         }
