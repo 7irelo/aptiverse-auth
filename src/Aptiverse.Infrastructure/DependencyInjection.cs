@@ -1,5 +1,6 @@
 ﻿using Aptiverse.Application;
 using Aptiverse.Infrastructure.Data;
+using Aptiverse.Infrastructure.Identity;
 using Aptiverse.Infrastructure.RateLimiting.Aptiverse.Infrastructure.RateLimiting;
 using Aptiverse.Infrastructure.ServiceRegistartion;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ namespace Aptiverse.Infrastructure
                 options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+            services.AddIdentityServices(configuration);
             services.AddAutoMapper(typeof(IAssemblyMarker).Assembly);
             services.AddApplicationServices();
             services.AddRateLimitingServices();

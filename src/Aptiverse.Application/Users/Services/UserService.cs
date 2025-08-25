@@ -1,18 +1,19 @@
 ﻿using Aptiverse.Application.Users.Dtos;
+using Aptiverse.Domain.Models.Users;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
 
 namespace Aptiverse.Application.Users.Services
 {
-    public class UserService(UserManager<IdentityUser> userManager, IMapper mapper) : IUserService
+    public class UserService(UserManager<ApplicationUser> userManager, IMapper mapper) : IUserService
     {
-        private readonly UserManager<IdentityUser> _userManager = userManager;
+        private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly IMapper _mapper = mapper;
 
         public async Task<UserDto> CreateUserAsync(UserDto userDto)
         {
-            var user = new IdentityUser
+            var user = new ApplicationUser
             {
                 UserName = userDto.UserName,
                 Email = userDto.Email,
