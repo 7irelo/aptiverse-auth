@@ -1,19 +1,18 @@
 ﻿using Aptiverse.Application.AI.Dtos;
 using Aptiverse.Application.AI.Services;
-using Aptiverse.Application.Users.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Aptiverse.Api.Web.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/models")]
     [ApiController]
-    public class AIController(IAiTaskService aiTaskService) : ControllerBase
+    public class ModelController(IModelTaskService aiTaskService) : ControllerBase
     {
-        private readonly IAiTaskService _aiTaskService = aiTaskService;
-        [HttpPost("ai/summarize")]
+        private readonly IModelTaskService _aiTaskService = aiTaskService;
+        [HttpPost("summarize")]
         public async Task<IActionResult> Summarize([FromBody] string inputText)
         {
-            var task = new AiTaskPayloadDto
+            var task = new ModelTaskPayloadDto
             {
                 TaskType = "summarization",
                 InputText = inputText,
