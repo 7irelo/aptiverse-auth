@@ -1,4 +1,5 @@
 # 📚 Aptiverse API – AI-Powered Educational Ecosystem
+<img width="1916" height="908" alt="image" src="https://github.com/user-attachments/assets/1b8c5117-eb54-426a-bf2b-d1c0fee7c50c" />
 
 **Aptiverse** is an intelligent, AI-driven educational API built with the mission of transforming the way South African students in Grades 11 & 12 learn, grow, and thrive—regardless of background or school affiliation.
 
