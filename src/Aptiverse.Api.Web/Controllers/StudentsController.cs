@@ -19,14 +19,14 @@ namespace Aptiverse.Api.Web.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Policy = "ParentAccess")]
+        //[Authorize(Policy = "ParentAccess")]
         public async Task<StudentDto> GetOneStudent(long id)
         {
             return await _studentService.GetOneStudentAsync(id);
         }
 
         [HttpGet]
-        [Authorize(Policy = "ParentAccess")]
+        //[Authorize(Policy = "ParentAccess")]
         public async Task<IEnumerable<StudentDto>> GetManyStudents([FromQuery] string filter = "{}")
         {
             return await _studentService.GetManyStudentAsync(filter);

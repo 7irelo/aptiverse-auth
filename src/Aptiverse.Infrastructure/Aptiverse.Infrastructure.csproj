@@ -7,26 +7,31 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.14.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.19" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.19" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.6">
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.21" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.21">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.21">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Aptiverse.Application\Aptiverse.Application.csproj" />
     <ProjectReference Include="..\Aptiverse.Core\Aptiverse.Core.csproj" />
     <ProjectReference Include="..\Aptiverse.Domain\Aptiverse.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Data\Configurations\" />
+    <Folder Include="NewFolder\" />
   </ItemGroup>
 
 </Project>

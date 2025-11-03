@@ -6,14 +6,9 @@ using Aptiverse.Domain.Models.Students;
 
 namespace Aptiverse.Infrastructure.Authorisation
 {
-    public class ParentChildHandler : AuthorizationHandler<ParentChildRequirement, Student>
+    public class ParentChildHandler(ApplicationDbContext context) : AuthorizationHandler<ParentChildRequirement, Student>
     {
-        private readonly ApplicationDbContext _context;
-
-        public ParentChildHandler(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
 
         protected override async Task HandleRequirementAsync(
             AuthorizationHandlerContext context,

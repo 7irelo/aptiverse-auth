@@ -1,228 +1,313 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Aptiverse.Api.Web.Controllers;
+using Aptiverse.Application.Auth.Dtos;
+using Aptiverse.Application.Auth.Services;
+using Aptiverse.Core.Dtos;
+using Aptiverse.Core.Exceptions;
+using Aptiverse.Domain.Models.Users;
+using Aptiverse.Infrastructure.Data;
+using Aptiverse.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Aptiverse.Application.Auth.Dto;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
-    private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly IConfiguration _config;
+    private readonly IAuthService _authService;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration config)
+    public AuthController(
+        IAuthService authService,
+        ILogger<AuthController> logger,
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        IConfiguration config,
+        ApplicationDbContext dbContext,
+        ITokenProvider tokenProvider)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _config = config;
+        _authService = authService;
+        _logger = logger;
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        var user = new IdentityUser
+        try
         {
-            UserName = dto.Username,
-            Email = dto.Email,
-            PhoneNumber = dto.PhoneNumber
-        };
-
-        var result = await _userManager.CreateAsync(user, dto.Password);
-
-        if (result.Succeeded)
-        {
-            // Optionally add user to a default role
-            // await _userManager.AddToRoleAsync(user, "User");
-
-            return Ok(new { message = "User registered successfully" });
+            var result = await _authService.RegisterUserAsync(registerDto);
+            return Ok(result);
         }
-
-        return BadRequest(result.Errors);
+        catch (UserRegistrationException ex)
+        {
+            return BadRequest(new
+            {
+                message = "User registration failed",
+                error = ex.Message,
+                type = "RegistrationError"
+            });
+        }
+        catch (RoleAssignmentException ex)
+        {
+            return BadRequest(new
+            {
+                message = "Role assignment failed",
+                error = ex.Message,
+                type = "RoleError"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during user registration");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred during registration",
+                type = "ServerError"
+            });
+        }
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
-        var user = await _userManager.FindByNameAsync(dto.Username);
-        if (user != null && await _userManager.CheckPasswordAsync(user, dto.Password))
+        try
         {
-            var roles = await _userManager.GetRolesAsync(user);
-
-            var claims = new List<Claim>
+            var result = await _authService.LoginUserAsync(loginDto);
+            return Ok(result);
+        }
+        catch (AuthenticationException ex)
+        {
+            return Unauthorized(new
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName!),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: creds
-            );
-
-            return Ok(new
-            {
-                token = new JwtSecurityTokenHandler().WriteToken(token),
-                expires = token.ValidTo,
-                user = new
-                {
-                    id = user.Id,
-                    username = user.UserName,
-                    email = user.Email,
-                    roles = roles
-                }
+                message = ex.Message,
+                type = "AuthenticationError"
             });
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during user login");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred during login",
+                type = "ServerError"
+            });
+        }
+    }
 
-        return Unauthorized(new { message = "Invalid username or password" });
+    [HttpPost("refresh-token")]
+    [Authorize]
+    public async Task<IActionResult> RefreshToken()
+    {
+        try
+        {
+            var result = await _authService.RefreshTokenAsync(User);
+            return Ok(result);
+        }
+        catch (TokenRefreshException ex)
+        {
+            return Unauthorized(new
+            {
+                message = ex.Message,
+                type = "TokenRefreshError"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during token refresh");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred during token refresh",
+                type = "ServerError"
+            });
+        }
+    }
+
+    [HttpPost("validate-token")]
+    public async Task<IActionResult> ValidateToken([FromBody] ValidateTokenDto validateTokenDto)
+    {
+        try
+        {
+            var result = await _authService.ValidateTokenAsync(validateTokenDto);
+            return Ok(result);
+        }
+        catch (TokenValidationException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message,
+                type = "TokenValidationError"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during token validation");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred during token validation",
+                type = "ServerError"
+            });
+        }
     }
 
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        await _signInManager.SignOutAsync();
-        return Ok(new { message = "Logged out successfully" });
+        try
+        {
+            var result = await _authService.LogoutUserAsync(User);
+            return Ok(result);
+        }
+        catch (AuthenticationException ex)
+        {
+            // Still return success for better UX
+            return Ok(new { message = "Logged out successfully" });
+        }
+        catch (LogoutException ex)
+        {
+            _logger.LogError(ex, "Error during logout process");
+            // Still return success for better UX
+            return Ok(new { message = "Logged out successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during logout");
+            // Still return success for better UX
+            return Ok(new { message = "Logged out successfully" });
+        }
     }
 
     [HttpPost("change-password")]
     [Authorize]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changePasswordDto)
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
+        try
         {
-            return NotFound(new { message = "User not found" });
+            var result = await _authService.ChangePasswordAsync(User, changePasswordDto);
+            return Ok(result);
         }
-
-        var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
-
-        if (result.Succeeded)
+        catch (AuthenticationException ex)
         {
-            return Ok(new { message = "Password changed successfully" });
+            return Unauthorized(new
+            {
+                message = ex.Message,
+                type = "AuthenticationError"
+            });
         }
-
-        return BadRequest(result.Errors);
+        catch (PasswordChangeException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message,
+                type = "PasswordChangeError"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during password change");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred while changing password",
+                type = "ServerError"
+            });
+        }
     }
 
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
     {
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null)
+        try
         {
-            // Don't reveal that the user doesn't exist for security reasons
-            return Ok(new { message = "If the email exists, a password reset link has been sent" });
+            var result = await _authService.ForgotPasswordAsync(forgotPasswordDto);
+            return Ok(result);
         }
-
-        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-
-        return Ok(new
+        catch (PasswordResetException ex)
         {
-            message = "Password reset token generated",
-            resetToken = token,
-            userId = user.Id
-        });
+            return BadRequest(new
+            {
+                message = ex.Message,
+                type = "PasswordResetError"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during password reset request");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred while processing your request",
+                type = "ServerError"
+            });
+        }
     }
 
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
     {
-        var user = await _userManager.FindByIdAsync(dto.UserId);
-        if (user == null)
+        try
         {
-            return BadRequest(new { message = "Invalid reset token" });
+            var result = await _authService.ResetPasswordAsync(resetPasswordDto);
+            return Ok(result);
         }
-
-        var result = await _userManager.ResetPasswordAsync(user, dto.ResetToken, dto.NewPassword);
-
-        if (result.Succeeded)
+        catch (InvalidResetTokenException ex)
         {
-            return Ok(new { message = "Password reset successfully" });
+            return BadRequest(new
+            {
+                message = ex.Message,
+                type = "InvalidResetToken"
+            });
         }
-
-        return BadRequest(result.Errors);
+        catch (PasswordResetException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message,
+                type = "PasswordResetError"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during password reset");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred while resetting password",
+                type = "ServerError"
+            });
+        }
     }
 
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> GetCurrentUser()
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
+        try
         {
-            return NotFound(new { message = "User not found" });
+            var result = await _authService.GetCurrentUserAsync(User);
+            return Ok(result);
         }
-
-        var roles = await _userManager.GetRolesAsync(user);
-
-        return Ok(new
+        catch (AuthenticationException ex)
         {
-            id = user.Id,
-            username = user.UserName,
-            email = user.Email,
-            phoneNumber = user.PhoneNumber,
-            roles = roles
-        });
-    }
-
-    [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken()
-    {
-        // Extract user identity from current token
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
+            return Unauthorized(new
+            {
+                message = ex.Message,
+                type = "AuthenticationError"
+            });
         }
-
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null)
+        catch (UserRetrievalException ex)
         {
-            return Unauthorized();
+            return Unauthorized(new
+            {
+                message = ex.Message,
+                type = "UserRetrievalError"
+            });
         }
-
-        var roles = await _userManager.GetRolesAsync(user);
-
-        var claims = new List<Claim>
+        catch (Exception ex)
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName!),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-
-        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
-            signingCredentials: creds
-        );
-
-        return Ok(new
-        {
-            token = new JwtSecurityTokenHandler().WriteToken(token),
-            expires = token.ValidTo
-        });
+            _logger.LogError(ex, "Unexpected error while retrieving current user");
+            return StatusCode(500, new
+            {
+                message = "An unexpected error occurred while retrieving user information",
+                type = "ServerError"
+            });
+        }
     }
 }

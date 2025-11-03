@@ -1,4 +1,4 @@
-﻿namespace Aptiverse.Application.Auth.Dto
+﻿namespace Aptiverse.Application.Auth.Dtos
 {
     public record ForgotPasswordDto(string Email);
 }

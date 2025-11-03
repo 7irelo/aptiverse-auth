@@ -18,74 +18,74 @@ public class UserRepositoryBenchmarks
         _context = new ApplicationDbContext(options);
 
         _context.Database.EnsureCreated();
-        _context.Users.Add(new ApplicationUser
-        {
-            Id = 1,
-            FirstName = "Test",
-            LastName = "User",
-            TypeId = 1,
-            CategoryId = 1
-        });
-        _context.SaveChanges();
+        //_context.Users.Add(new ApplicationUser
+        //{
+        //    Id = 1,
+        //    FirstName = "Test",
+        //    LastName = "User",
+        //    TypeId = 1,
+        //    CategoryId = 1
+        //});
+        //_context.SaveChanges();
     }
 
     [Benchmark]
     public async Task AddUser_LINQ()
     {
-        _context.Set<ApplicationUser>().Add(new ApplicationUser
-        {
-            FirstName = "John",
-            LastName = "Doe",
-            TypeId = 1,
-            CategoryId = 1,
-        });
+        //_context.Set<ApplicationUser>().Add(new ApplicationUser
+        //{
+        //    FirstName = "John",
+        //    LastName = "Doe",
+        //    TypeId = 1,
+        //    CategoryId = 1,
+        //});
         await _context.SaveChangesAsync();
     }
 
     [Benchmark]
     public async Task AddUser_RawSQL()
     {
-        var user = new ApplicationUser
-        {
-            FirstName = "John",
-            LastName = "Cena",
-            TypeId = 1,
-            CategoryId = 1,
-            Type = new UserType { Id = 1, DisplayName = "Superuser" },
-            Category = new UserCategory { Id = 1, DisplayName = "User" }
-        };
+        //var user = new ApplicationUser
+        //{
+        //    FirstName = "John",
+        //    LastName = "Cena",
+        //    TypeId = 1,
+        //    CategoryId = 1,
+        //    Type = new UserType { Id = 1, DisplayName = "Superuser" },
+        //    Category = new UserCategory { Id = 1, DisplayName = "User" }
+        //};
 
         using var transaction = await _context.Database.BeginTransactionAsync();
 
-        try
-        {
-            // Insert Type if not exists (PostgreSQL syntax)
-            await _context.Database.ExecuteSqlRawAsync(
-                @"INSERT INTO UserTypes (Id, DisplayName)
-              VALUES ({0}, {1})
-              ON CONFLICT (Id) DO NOTHING",
-                user.Type.Id, user.Type.DisplayName);
+        //try
+        //{
+        //    // Insert Type if not exists (PostgreSQL syntax)
+        //    await _context.Database.ExecuteSqlRawAsync(
+        //        @"INSERT INTO UserTypes (Id, DisplayName)
+        //      VALUES ({0}, {1})
+        //      ON CONFLICT (Id) DO NOTHING",
+        //        user.Type.Id, user.Type.DisplayName);
 
-            // Insert Category if not exists
-            await _context.Database.ExecuteSqlRawAsync(
-                @"INSERT INTO UserCategories (Id, DisplayName)
-              VALUES ({0}, {1})
-              ON CONFLICT (Id) DO NOTHING",
-                user.Category.Id, user.Category.DisplayName);
+        //    // Insert Category if not exists
+        //    await _context.Database.ExecuteSqlRawAsync(
+        //        @"INSERT INTO UserCategories (Id, DisplayName)
+        //      VALUES ({0}, {1})
+        //      ON CONFLICT (Id) DO NOTHING",
+        //        user.Category.Id, user.Category.DisplayName);
 
-            // Insert User
-            await _context.Database.ExecuteSqlRawAsync(
-                @"INSERT INTO Users (FirstName, LastName, TypeId, CategoryId)
-              VALUES ({0}, {1}, {2}, {3})",
-                user.FirstName, user.LastName, user.Type.Id, user.Category.Id);
+        //    // Insert User
+        //    await _context.Database.ExecuteSqlRawAsync(
+        //        @"INSERT INTO Users (FirstName, LastName, TypeId, CategoryId)
+        //      VALUES ({0}, {1}, {2}, {3})",
+        //        user.FirstName, user.LastName, user.Type.Id, user.Category.Id);
 
-            await transaction.CommitAsync();
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        //    await transaction.CommitAsync();
+        //}
+        //catch
+        //{
+        //    await transaction.RollbackAsync();
+        //    throw;
+        //}
     }
 
     [Benchmark]

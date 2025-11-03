@@ -1,10 +1,13 @@
 ﻿using Aptiverse.Domain.Models.Users;
 using Aptiverse.Infrastructure.Authorisation;
 using Aptiverse.Infrastructure.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Aptiverse.Infrastructure.Identity
 {
@@ -21,18 +24,21 @@ namespace Aptiverse.Infrastructure.Identity
             {
                 options.Password.RequireDigit = true;
                 options.Password.RequiredLength = 8;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = true;
                 options.User.RequireUniqueEmail = true;
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
             });
 
-            // Add JWT authentication
             services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = "JwtBearer";
-                options.DefaultChallengeScheme = "JwtBearer";
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer("JwtBearer", options =>
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
@@ -40,9 +46,10 @@ namespace Aptiverse.Infrastructure.Identity
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = configuration["Jwt:Issuer"],
                     ValidAudience = configuration["Jwt:Audience"],
-                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
-                        System.Text.Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)
-                    )
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)
+                    ),
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 
@@ -50,9 +57,12 @@ namespace Aptiverse.Infrastructure.Identity
             {
                 options.AddPolicy("RequireStudent", p => p.RequireRole("Student"));
                 options.AddPolicy("RequireTeacher", p => p.RequireRole("Teacher"));
+                options.AddPolicy("RequireParent", p => p.RequireRole("Parent"));
                 options.AddPolicy("RequireAdmin", p => p.RequireRole("Admin"));
                 options.AddPolicy("RequireSuperUser", p => p.RequireRole("SuperUser"));
                 options.AddPolicy("ParentAccess", policy => policy.Requirements.Add(new ParentChildRequirement()));
+                options.AddPolicy("RequireStaff", p => p.RequireRole("Teacher", "Admin", "SuperUser"));
+                options.AddPolicy("RequireAnyRole", p => p.RequireRole("Student", "Teacher", "Parent", "Admin", "SuperUser"));
             });
 
             services.AddScoped<IAuthorizationHandler, ParentChildHandler>();

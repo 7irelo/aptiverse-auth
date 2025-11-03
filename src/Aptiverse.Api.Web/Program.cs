@@ -1,6 +1,11 @@
+using Aptiverse.Api.Web;
 using Aptiverse.Api.Web.Middleware;
 using Aptiverse.Infrastructure;
+using Aptiverse.Infrastructure.Data;
+using Aptiverse.Infrastructure.Identity;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,13 +68,56 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        await RoleSeeder.SeedRolesAsync(scope.ServiceProvider);
+        Console.WriteLine("Roles seeded successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred while seeding roles: {ex.Message}");
+    }
+}
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath)),
+    RequestPath = ""
+});
+
+app.MapGet("/index.html", async (HttpContext context) =>
+{
+    var filePath = Path.Combine(builder.Environment.ContentRootPath, "index.html");
+
+    if (File.Exists(filePath))
+    {
+        context.Response.ContentType = "text/html";
+        await context.Response.SendFileAsync(filePath);
+    }
+    else
+    {
+        context.Response.StatusCode = 404;
+        await context.Response.WriteAsync("File not found");
+    }
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    app.MapScalarApiReference("/dev", options =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Aptiverse API v1");
-        c.RoutePrefix = string.Empty;
+        options.Title = "Aptiverse API – Scalar";
+        options.OpenApiRoutePattern = "/swagger/{documentName}/swagger.json";
+    });
+
+    app.UseReDoc(options =>
+    {
+        options.RoutePrefix = "docs";
+        options.DocumentTitle = "Aptiverse API - ReDoc";
+        options.SpecUrl = "/swagger/v1/swagger.json";
     });
 }
 
