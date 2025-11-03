@@ -4,15 +4,20 @@ EXPOSE 5000
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["Aptiverse.Api.Web/Aptiverse.Api.Web.csproj", "Aptiverse.Api.Web/"]
-COPY ["Aptiverse.Application/Aptiverse.Application.csproj", "Aptiverse.Application/"]
-COPY ["Aptiverse.Core/Aptiverse.Core.csproj", "Aptiverse.Core/"]
-COPY ["Aptiverse.Domain/Aptiverse.Domain.csproj", "Aptiverse.Domain/"]
-COPY ["Aptiverse.Infrastructure/Aptiverse.Infrastructure.csproj", "Aptiverse.Infrastructure/"]
-RUN dotnet restore "Aptiverse.Api.Web/Aptiverse.Api.Web.csproj"
+
+COPY ["Aptiverse.Api.sln", "./"]
+
+COPY ["src/Aptiverse.Api.Web/Aptiverse.Api.Web.csproj", "src/Aptiverse.Api.Web/"]
+COPY ["src/Aptiverse.Application/Aptiverse.Application.csproj", "src/Aptiverse.Application/"]
+COPY ["src/Aptiverse.Core/Aptiverse.Core.csproj", "src/Aptiverse.Core/"]
+COPY ["src/Aptiverse.Domain/Aptiverse.Domain.csproj", "src/Aptiverse.Domain/"]
+COPY ["src/Aptiverse.Infrastructure/Aptiverse.Infrastructure.csproj", "src/Aptiverse.Infrastructure/"]
+
+RUN dotnet restore "Aptiverse.Api.sln"
 
 COPY . .
-WORKDIR "/src/Aptiverse.Api.Web"
+
+WORKDIR "/src/src/Aptiverse.Api.Web"
 RUN dotnet build "Aptiverse.Api.Web.csproj" -c Release -o /app/build
 
 FROM build AS publish
