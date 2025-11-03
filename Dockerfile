@@ -12,6 +12,7 @@ COPY ["src/Aptiverse.Application/Aptiverse.Application.csproj", "src/Aptiverse.A
 COPY ["src/Aptiverse.Core/Aptiverse.Core.csproj", "src/Aptiverse.Core/"]
 COPY ["src/Aptiverse.Domain/Aptiverse.Domain.csproj", "src/Aptiverse.Domain/"]
 COPY ["src/Aptiverse.Infrastructure/Aptiverse.Infrastructure.csproj", "src/Aptiverse.Infrastructure/"]
+COPY ["src/Aptiverse.Benchmarks/Aptiverse.Benchmarks.csproj", "src/Aptiverse.Benchmarks/"]
 
 RUN dotnet restore "Aptiverse.Api.sln"
 
