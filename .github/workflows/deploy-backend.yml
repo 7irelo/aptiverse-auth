@@ -1,0 +1,46 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy Backend to EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cd /opt/aptiverse/backend
+          
+          # Pull latest backend code
+          git clone https://github.com/yourusername/aptiverse-api.git . 2>/dev/null || git pull origin main
+          
+          # Build and run backend
+          docker build -t aptiverse-backend .
+          docker stop aptiverse-backend 2>/dev/null || true
+          docker rm aptiverse-backend 2>/dev/null || true
+          docker run -d \
+            --name aptiverse-backend \
+            --network aptiverse-net \
+            -e ASPNETCORE_ENVIRONMENT=Production \
+            -e ASPNETCORE_URLS=http://0.0.0.0:5000 \
+            -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION_STRING }}" \
+            aptiverse-backend
+            
+          # Clean up
+          docker image prune -f
+        EOF
