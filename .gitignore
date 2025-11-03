@@ -360,3 +360,7 @@ Thumbs.db
 
 # VS Code
 .history/
+
+appsettings.Development.json
+appsettings.json
+*.env
