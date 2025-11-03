@@ -28,7 +28,7 @@ jobs:
 
     - name: Deploy Backend to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
           set -e
           echo "Starting backend deployment..."
           
@@ -38,7 +38,7 @@ jobs:
           # Clone or pull latest code
           if [ ! -d ".git" ]; then
             echo "Cloning backend repository..."
-            git clone https://github.com/7irelo/aptiverse-api.git .  # ← Update with your username
+            git clone https://github.com/7irelo/aptiverse-api.git .
           else
             echo "Pulling latest backend changes..."
             git pull origin main
@@ -55,6 +55,7 @@ jobs:
           docker run -d \
             --name aptiverse-backend \
             --network aptiverse-net \
+            -p 5000:5000 \
             -e ASPNETCORE_ENVIRONMENT=Production \
             -e ASPNETCORE_URLS=http://0.0.0.0:5000 \
             -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION_STRING }}" \
