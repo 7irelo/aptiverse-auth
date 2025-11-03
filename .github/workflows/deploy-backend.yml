@@ -3,6 +3,7 @@ name: Deploy Backend to EC2
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -21,18 +22,36 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+    - name: Test SSH Connection
+      run: |
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "echo 'SSH connection successful'"
+
     - name: Deploy Backend to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+          set -e
+          echo "Starting backend deployment..."
+          
           cd /opt/aptiverse/backend
+          echo "Current directory: $(pwd)"
           
-          # Pull latest backend code
-          git clone https://github.com/yourusername/aptiverse-api.git . 2>/dev/null || git pull origin main
+          # Clone or pull latest code
+          if [ ! -d ".git" ]; then
+            echo "Cloning backend repository..."
+            git clone https://github.com/7irelo/aptiverse-api.git .  # ← Update with your username
+          else
+            echo "Pulling latest backend changes..."
+            git pull origin main
+          fi
           
-          # Build and run backend
+          echo "Building Docker image..."
           docker build -t aptiverse-backend .
+          
+          echo "Stopping existing container..."
           docker stop aptiverse-backend 2>/dev/null || true
           docker rm aptiverse-backend 2>/dev/null || true
+          
+          echo "Starting new container..."
           docker run -d \
             --name aptiverse-backend \
             --network aptiverse-net \
@@ -41,6 +60,8 @@ jobs:
             -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION_STRING }}" \
             aptiverse-backend
             
-          # Clean up
+          echo "Cleaning up..."
           docker image prune -f
-        EOF
+          
+          echo "Backend deployment completed successfully!"
+        '
