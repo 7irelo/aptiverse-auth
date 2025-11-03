@@ -51,14 +51,38 @@ jobs:
           docker stop aptiverse-backend 2>/dev/null || true
           docker rm aptiverse-backend 2>/dev/null || true
           
-          echo "Starting new container..."
+          echo "Starting Redis Stack..."
+          docker run -d \
+            --name redis-stack \
+            --network aptiverse-net \
+            -p 6379:6379 \
+            -p 8001:8001 \
+            redis/redis-stack:latest
+            
+          echo "Waiting for Redis to be ready..."
+          sleep 10
+          
+          echo "Starting backend container..."
           docker run -d \
             --name aptiverse-backend \
             --network aptiverse-net \
             -p 5000:5000 \
             -e ASPNETCORE_ENVIRONMENT=Production \
             -e ASPNETCORE_URLS=http://0.0.0.0:5000 \
+            -e Authentication__Google__ClientId="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            -e Authentication__Google__ClientSecret="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            -e Jwt__Key="${{ secrets.JWT_KEY }}" \
+            -e Jwt__Issuer="${{ secrets.JWT_ISSUER }}" \
+            -e Jwt__Audience="${{ secrets.JWT_AUDIENCE }}" \
+            -e Jwt__ExpireHours="${{ secrets.JWT_EXPIRE_HOURS }}" \
             -e ConnectionStrings__DefaultConnection="${{ secrets.DB_CONNECTION_STRING }}" \
+            -e ConnectionStrings__Redis="redis-stack:6379,abortConnect=false" \
+            -e EmailSettings__Server="${{ secrets.EMAIL_SERVER }}" \
+            -e EmailSettings__Port="${{ secrets.EMAIL_PORT }}" \
+            -e EmailSettings__SenderName="${{ secrets.EMAIL_SENDER_NAME }}" \
+            -e EmailSettings__SenderEmail="${{ secrets.EMAIL_SENDER_EMAIL }}" \
+            -e EmailSettings__Username="${{ secrets.EMAIL_USERNAME }}" \
+            -e EmailSettings__Password="${{ secrets.EMAIL_PASSWORD }}" \
             aptiverse-backend
             
           echo "Cleaning up..."
