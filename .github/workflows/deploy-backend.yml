@@ -10,46 +10,60 @@ env:
   EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Build Docker image
+      run: |
+        docker build -t aptiverse-backend .
+        docker save aptiverse-backend | gzip > backend-image.tar.gz
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-image
+        path: backend-image.tar.gz
+        retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-image
+        path: .
+
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.8.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Test SSH Connection
-      run: |
-        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "echo 'SSH connection successful'"
-
     - name: Deploy Backend to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10 ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        scp -o StrictHostKeyChecking=no backend-image.tar.gz ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/tmp/
+        
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
           set -e
-          echo "Starting backend deployment..."
+          echo "Loading Docker image..."
+          docker load < /tmp/backend-image.tar.gz
           
-          cd /opt/aptiverse/backend
-          echo "Current directory: $(pwd)"
-          
-          # Clone or pull latest code
-          if [ ! -d ".git" ]; then
-            echo "Cloning backend repository..."
-            git clone https://github.com/7irelo/aptiverse-api.git .
-          else
-            echo "Pulling latest backend changes..."
-            git pull origin main
-          fi
-          
-          echo "Building Docker image..."
-          docker build -t aptiverse-backend .
-          
-          echo "Stopping existing container..."
+          echo "Stopping existing containers..."
           docker stop aptiverse-backend 2>/dev/null || true
           docker rm aptiverse-backend 2>/dev/null || true
+          docker stop redis-stack 2>/dev/null || true
+          docker rm redis-stack 2>/dev/null || true
           
           echo "Starting Redis Stack..."
           docker run -d \
@@ -86,6 +100,7 @@ jobs:
             aptiverse-backend
             
           echo "Cleaning up..."
+          rm /tmp/backend-image.tar.gz
           docker image prune -f
           
           echo "Backend deployment completed successfully!"
