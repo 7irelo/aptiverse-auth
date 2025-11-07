@@ -31,7 +31,6 @@
 
   <ItemGroup>
     <Folder Include="Data\Configurations\" />
-    <Folder Include="NewFolder\" />
   </ItemGroup>
 
 </Project>

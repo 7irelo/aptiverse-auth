@@ -1,13 +1,9 @@
 ﻿using Aptiverse.Application;
-using Aptiverse.Domain.Models.Users;
 using Aptiverse.Infrastructure;
-using Aptiverse.Infrastructure.Data;
 using Aptiverse.Infrastructure.RateLimiting.Aptiverse.Infrastructure.RateLimiting;
-using Aptiverse.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
@@ -26,13 +22,43 @@ namespace Aptiverse.Api.Web
             services.AddRateLimitingServices();
             services.AddLogging();
             services.AddApplicationServices();
+            services.AddCorsServices(configuration);
+
+            return services;
+        }
+
+        public static IServiceCollection AddCorsServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowNextJS", policy =>
+                {
+                    policy.WithOrigins(
+                            "http://localhost:3000",
+                            "https://localhost:3000",
+                            "http://127.0.0.1:3000"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+
+                if (configuration.GetValue<bool>("EnableDevelopmentCors"))
+                {
+                    options.AddPolicy("AllowAll", policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+                }
+            });
 
             return services;
         }
 
         public static IServiceCollection AddIdentityServices(this IServiceCollection services, IConfiguration configuration)
         {
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -90,6 +116,7 @@ namespace Aptiverse.Api.Web
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
             });
+
             services.AddAuthorizationBuilder()
                 .AddPolicy("RequireAuthenticatedUser", policy =>
                     policy.RequireAuthenticatedUser())
@@ -129,7 +156,6 @@ namespace Aptiverse.Api.Web
                 var redis = sp.GetRequiredService<IConnectionMultiplexer>();
                 return redis.GetDatabase();
             });
-
 
             services.AddHealthChecks()
                 .AddRedis(redisConnectionString, name: "redis");

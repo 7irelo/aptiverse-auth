@@ -12,23 +12,17 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase
+public class AuthController(
+    IAuthService authService,
+    ILogger<AuthController> logger,
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    IConfiguration config,
+    ApplicationDbContext dbContext,
+    ITokenProvider tokenProvider) : ControllerBase
 {
-    private readonly IAuthService _authService;
-    private readonly ILogger<AuthController> _logger;
-
-    public AuthController(
-        IAuthService authService,
-        ILogger<AuthController> logger,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        IConfiguration config,
-        ApplicationDbContext dbContext,
-        ITokenProvider tokenProvider)
-    {
-        _authService = authService;
-        _logger = logger;
-    }
+    private readonly IAuthService _authService = authService;
+    private readonly ILogger<AuthController> _logger = logger;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)

@@ -1,7 +1,5 @@
 using Aptiverse.Api.Web;
 using Aptiverse.Api.Web.Middleware;
-using Aptiverse.Infrastructure;
-using Aptiverse.Infrastructure.Data;
 using Aptiverse.Infrastructure.Identity;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
@@ -67,6 +65,13 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseCors("AllowNextJS");
+
+ if (app.Environment.IsDevelopment())
+ {
+     app.UseCors("AllowAll");
+ }
 
 using (var scope = app.Services.CreateScope())
 {

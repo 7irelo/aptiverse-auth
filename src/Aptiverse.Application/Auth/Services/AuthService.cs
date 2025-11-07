@@ -343,14 +343,15 @@ namespace Aptiverse.Application.Auth.Services
 
         public async Task<TokenDto<UserDto>> LoginUserAsync(LoginDto dto)
         {
-            var user = await _userManager.FindByNameAsync(dto.Username)
-                ?? throw new AuthenticationException("Invalid username or password");
-            var signInResult = await _signInManager.PasswordSignInAsync(dto.Username, dto.Password, true, false);
+            var user = await _userManager.FindByEmailAsync(dto.Email)
+                ?? throw new AuthenticationException("Invalid email or password");
+
+            var signInResult = await _signInManager.PasswordSignInAsync(user.UserName, dto.Password, true, false);
 
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
-            if (!isPasswordValid)
+            if (!isPasswordValid || !signInResult.Succeeded)
             {
-                throw new AuthenticationException("Invalid username or password");
+                throw new AuthenticationException("Invalid email or password");
             }
 
             var roles = await _userManager.GetRolesAsync(user);
