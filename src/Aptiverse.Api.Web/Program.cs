@@ -68,10 +68,10 @@ var app = builder.Build();
 
 app.UseCors("AllowNextJS");
 
- if (app.Environment.IsDevelopment())
- {
-     app.UseCors("AllowAll");
- }
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAll");
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -109,9 +109,10 @@ app.MapGet("/index.html", async (HttpContext context) =>
     }
 });
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction()) // <-- ADDED Production
 {
-    app.UseSwagger();
     app.MapScalarApiReference("/dev", options =>
     {
         options.Title = "Aptiverse API – Scalar";
@@ -123,6 +124,16 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "docs";
         options.DocumentTitle = "Aptiverse API - ReDoc";
         options.SpecUrl = "/swagger/v1/swagger.json";
+    });
+}
+
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+{
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Aptiverse API V1");
+        options.RoutePrefix = "swagger"; // Available at /swagger
+        options.DocumentTitle = "Aptiverse API - Swagger UI";
     });
 }
 
