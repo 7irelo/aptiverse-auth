@@ -346,10 +346,8 @@ namespace Aptiverse.Application.Auth.Services
             var user = await _userManager.FindByEmailAsync(dto.Email)
                 ?? throw new AuthenticationException("Invalid email or password");
 
-            var signInResult = await _signInManager.PasswordSignInAsync(user.UserName, dto.Password, true, false);
-
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
-            if (!isPasswordValid || !signInResult.Succeeded)
+            if (!isPasswordValid)
             {
                 throw new AuthenticationException("Invalid email or password");
             }

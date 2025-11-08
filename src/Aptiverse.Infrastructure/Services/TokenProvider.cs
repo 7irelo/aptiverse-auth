@@ -59,16 +59,6 @@ namespace Aptiverse.Infrastructure.Services
 
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-            try
-            {
-                await _tokenStorageService.StoreTokenAsync(user.Id, tokenString, expiry);
-                _logger.LogDebug("JWT token stored for user {UserId}", user.Id);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to store token for user {UserId}", user.Id);
-            }
-
             return tokenString;
         }
 
