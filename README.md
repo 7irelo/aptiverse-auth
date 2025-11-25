@@ -1,51 +1,52 @@
-# 📚 Aptiverse API – AI-Powered Educational Ecosystem
-<img width="1916" height="908" alt="image" src="https://github.com/user-attachments/assets/1b8c5117-eb54-426a-bf2b-d1c0fee7c50c" />
+# 🔐 Aptiverse Auth Provider
 
-**Aptiverse** is an intelligent, AI-driven educational API built with the mission of transforming the way South African students in Grades 11 & 12 learn, grow, and thrive—regardless of background or school affiliation.
+<img width="1916" height="908" alt="Aptiverse Auth Provider" src="https://github.com/user-attachments/assets/1b8c5117-eb54-426a-bf2b-d1c0fee7c50c" />
 
-> 🔧 This repository contains the **backend API** powering the Aptiverse platform, built using **.NET 8 Core**, **Redis**, **AWS**, and other modern cloud-native tools and practices.
+**Aptiverse Auth Provider** is a secure, scalable authentication and authorization service built with **.NET 10**, designed to power user management, authentication, and role-based access control for the Aptiverse educational ecosystem.
+
+> 🔧 This repository contains the **authentication and user management backend** for the Aptiverse platform, providing robust identity services with JWT, Google OAuth, and role-based authorization.
 
 ---
 
 ## 🚀 Overview
 
-Aptiverse is not just an LMS or digital study tool. It is a **three-part educational ecosystem** built to support:
+Aptiverse Auth Provider is a dedicated authentication service that handles:
 
-* **Students** with personalized, emotionally intelligent study support.
-* **Teachers** with actionable insights on learner performance.
-* **Parents** with optional access to monitor their child's academic and emotional wellbeing.
+* **User Registration & Management** - Complete user lifecycle management
+* **Multi-factor Authentication** - JWT tokens with refresh capabilities
+* **Social Authentication** - Google OAuth integration
+* **Role-Based Access Control** - Admin, User, Student, and custom roles
+* **Security Features** - Rate limiting, password policies, and secure token management
 
-Unlike traditional systems locked behind school subscriptions, **Aptiverse empowers all students**, regardless of whether their school is onboarded.
+Unlike monolithic auth solutions, this provider is built with **enterprise-grade security** and **educational platform requirements** in mind.
 
 ---
 
-## 🧠 Core Features
+## 🛡️ Core Features
 
-### 🎓 Student-Centric Workspace
+### 🔐 Authentication
+* **JWT Bearer Token** authentication with configurable expiration
+* **Google OAuth** integration for social login
+* **Cookie-based authentication** for web applications
+* **Token refresh** mechanism for seamless user experience
 
-* AI-powered **study companion** that learns and adapts to individual learning styles.
-* Personal workspaces with note-taking, to-do lists, and smart reminders.
-* Gamified **goal system** with merit-based rewards.
+### 👥 User Management
+* **User registration** with email verification
+* **Password management** (change, reset, forgot password)
+* **Profile management** and user information retrieval
+* **Role assignment** and permission management
 
-### 💬 Emotional Intelligence Engine
+### 🎯 Role-Based Access Control
+* **Pre-defined roles**: Admin, User, Student, Parent, SuperUser
+* **Custom policy-based authorization**
+* **Fine-grained permission control** per endpoint
+* **Hierarchical role permissions**
 
-* Learner diary entries are interpreted using psychological AI models.
-* Detects emotional struggles and suggests actionable mental wellness strategies.
-
-### 📘 Subject-Specific AI Tutors
-
-* Each subject has a dedicated FastAPI model trained to assess performance.
-* Auto-generates practice material, tips, and explanations tailored to the learner.
-
-### 👨‍🏫 Teacher & Parent Insights
-
-* Teachers view strengths, gaps, and growth curves across subjects.
-* Parents can opt-in to receive progress updates, respecting student privacy.
-
-### 🏆 Rewards & Access Equality
-
-* Students unlock premium features by achieving goals.
-* Non-subscribed school learners can still access advanced tools via performance merit.
+### 📊 Security & Performance
+* **Intelligent rate limiting** with different tiers for user roles
+* **Multiple rate limiting strategies** (Fixed Window, Sliding Window, Token Bucket)
+* **CORS configuration** for cross-origin requests
+* **Request validation** and exception handling
 
 ---
 
@@ -53,84 +54,192 @@ Unlike traditional systems locked behind school subscriptions, **Aptiverse empow
 
 | Layer                       | Technology                            |
 | --------------------------- | ------------------------------------- |
-| **API**                     | .NET 8 Core, C#, REST, Docker         |
-| **AI Models**               | Python, FastAPI                       |
-| **Auth**                    | AWS Cognito                           |
-| **Database**                | Amazon RDS (PostgreSQL)               |
-| **Caching**                 | Redis on EC2                          |
-| **Message Queue**           | RabbitMQ (optional)                   |
-| **Benchmarking**            | Crank                                 |
-| **API Communication**       | RestSharp                             |
-| **DevOps**                  | Docker, CI/CD, AWS Lambda, CloudWatch |
-| **Frontend (context only)** | Next.js, TypeScript, Turbopack        |
+| **Framework**               | .NET 10, ASP.NET Core                 |
+| **Authentication**          | JWT Bearer, Google OAuth, Cookies     |
+| **Database**                | Entity Framework Core, PostgreSQL     |
+| **Caching**                 | Redis                                 |
+| **Security**                | ASP.NET Core Identity                 |
+| **API Documentation**       | OpenAPI, Scalar, ReDoc               |
+| **Containerization**        | Docker                               |
+| **Rate Limiting**           | ASP.NET Core Rate Limiting           |
 
 ---
 
 ## 📂 Project Structure
 
 ```
-Aptiverse.Api.Web           → Entry-point Web API, Controllers, Config
-Aptiverse.Application       → Application layer: DTOs, Services, Mappings
-Aptiverse.Benchmarks        → Performance testing with Crank
-Aptiverse.Core              → Core domain logic, business rules, services
-Aptiverse.Domain            → Entities and domain-driven design
-Aptiverse.Infrastructure    → Data, Repositories, EF Migrations, Utilities
+Aptiverse.Auth.Web           → Main web project with controllers and middleware
+Aptiverse.Application        → Application layer: DTOs, Services, Business logic
+Aptiverse.Core              → Core domain models and exceptions
+Aptiverse.Domain            → Domain entities and business rules
+Aptiverse.Infrastructure    → Data access, Entity Framework, Redis integration
 ```
 
-> Advanced C# features like **Reflection**, **Dependency Injection**, and custom **Repository Patterns** are used extensively to keep code clean, testable, and scalable.
+### Key Components
+
+* **AuthController** - Handles authentication flows (login, register, token refresh)
+* **UsersController** - User management (CRUD operations)
+* **StudentsController** - Student-specific operations
+* **Identity Services** - JWT, OAuth, and cookie authentication
+* **Rate Limiting** - Multi-tier request limiting based on user roles
 
 ---
 
-## 🧪 Benchmarking
+## 🔧 Configuration
 
-Performance is critical for an AI-integrated system. Aptiverse uses **[Crank](https://github.com/dotnet/crank)** to benchmark API throughput, latency, and concurrency under simulated student and teacher loads.
+### Authentication Setup
+```json
+{
+  "Jwt": {
+    "Key": "your-secret-key",
+    "Issuer": "aptiverse",
+    "Audience": "aptiverse-users"
+  },
+  "Authentication": {
+    "Google": {
+      "ClientId": "your-google-client-id",
+      "ClientSecret": "your-google-client-secret"
+    }
+  }
+}
+```
 
----
-
-## 🧠 Future Ideas
-
-Here are some features and modules that can be added next:
-
-* ✍️ **Essay Evaluator** using GPT-style LLMs for literature and history
-* 🔗 **Open Education Resource Integration** (e.g., Siyavula, Khan Academy)
-* 🧬 **Career Pathway Predictor** based on strengths, interests, and behavior
-* 🏫 **School Management Module**: Class schedules, announcements, and parent-teacher meetings
-* 📱 **Offline-first Mobile App** for learners with low connectivity
-* 🔒 **Blockchain-based Certification** and academic recordkeeping
-
----
-
-## 🔐 Security & Privacy
-
-* **User Authentication** via AWS Cognito (JWT-based).
-* Fine-grained **privacy controls** for student data visibility.
-* Strict **rate limiting** and **input sanitization** for API endpoints.
-
----
-
-## 🧑‍💻 Developer Notes
-
-* REST APIs are modular and organized by domain and service area.
-* **Dockerfile** included for containerized deployment.
-* AWS Lambda integration for on-demand compute and AI model inference.
-* Redis and PostgreSQL configured for scalability and caching.
+### Rate Limiting Tiers
+* **Premium Users** (Admin/SuperUser): 1000 requests/second
+* **Authenticated Users**: 500 requests/second  
+* **Anonymous Users**: 100 requests/minute
 
 ---
 
-## 📬 Contribution & Collaboration
+## 🚀 API Endpoints
 
-If you're passionate about AI in education, student empowerment, or scaling innovation in Africa, we’d love your input! Reach out via [LinkedIn](#) or contribute to the repo through PRs or ideas.
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/refresh-token` - Refresh JWT token
+- `POST /api/auth/logout` - User logout
+- `POST /api/auth/change-password` - Password change
+- `POST /api/auth/forgot-password` - Password reset request
+- `POST /api/auth/reset-password` - Password reset
+- `GET /api/auth/me` - Get current user info
+
+### User Management
+- `GET/POST/PUT/DELETE /api/users` - User CRUD operations (Admin only)
+- `GET/POST/PUT/DELETE /api/students` - Student management
 
 ---
 
-## 📢 License
+## 🛡️ Security Features
 
-> This project is currently in active development and may be private, licensed, or open-source in future iterations.
+### JWT Configuration
+```csharp
+options.TokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuer = true,
+    ValidateAudience = true,
+    ValidateLifetime = true,
+    ValidateIssuerSigningKey = true,
+    ValidIssuer = configuration["Jwt:Issuer"],
+    ValidAudience = configuration["Jwt:Audience"],
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
+    ClockSkew = TimeSpan.Zero
+};
+```
+
+### Role-Based Policies
+```csharp
+services.AddAuthorizationBuilder()
+    .AddPolicy("RequireAuthenticatedUser", policy => policy.RequireAuthenticatedUser())
+    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+    .AddPolicy("User", policy => policy.RequireRole("User", "Admin"));
+```
 
 ---
 
-### ❤️ Aptiverse: For Every Learner
+## 📚 Integration Guide
 
-Aptiverse is more than just a school tool—it's a **resilient platform for growth**, ensuring no student is left behind due to lack of access, support, or personalized guidance.
+### Frontend Integration
+```javascript
+// Login example
+const response = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+});
+
+const { token, refreshToken } = await response.json();
+localStorage.setItem('token', token);
+```
+
+### API Client Usage
+```csharp
+// Include JWT token in requests
+client.DefaultRequestHeaders.Authorization = 
+    new AuthenticationHeaderValue("Bearer", jwtToken);
+```
 
 ---
+
+## 🔄 Development
+
+### Running with Docker
+```bash
+docker build -t aptiverse-auth .
+docker run -p 8080:8080 aptiverse-auth
+```
+
+### Local Development
+```bash
+dotnet restore
+dotnet run
+```
+
+---
+
+## 📊 Monitoring & Documentation
+
+* **OpenAPI Documentation**: `/openapi/v1.json`
+* **Scalar API Reference**: `/dev`
+* **ReDoc Documentation**: `/docs`
+* **Health Checks**: Built-in ASP.NET Core health monitoring
+
+---
+
+## 🔐 Best Practices Implemented
+
+- ✅ **Secure Password Hashing** with ASP.NET Core Identity
+- ✅ **JWT Best Practices** with short-lived tokens and refresh mechanism
+- ✅ **CORS Configuration** for controlled cross-origin access
+- ✅ **Rate Limiting** to prevent abuse and DDoS attacks
+- ✅ **Input Validation** with custom filters and model validation
+- ✅ **Exception Handling** with structured error responses
+- ✅ **Role-Based Access Control** with policy-based authorization
+- ✅ **Secure Cookie Configuration** for web authentication
+
+---
+
+## 🚀 Deployment
+
+The Auth Provider is container-ready and can be deployed to:
+- **Docker Containers**
+- **Kubernetes** clusters
+- **Cloud Platforms** (AWS, Azure, GCP)
+- **Traditional IIS** hosting
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions to improve the Aptiverse Auth Provider! Please see our contributing guidelines for more information.
+
+---
+
+## 📄 License
+
+> This project is part of the Aptiverse educational ecosystem and is currently in active development.
+
+---
+
+### 🎯 Aptiverse Auth: Secure Identity for Education
+
+Built with ❤️ for the Aptiverse educational platform, providing robust and scalable authentication services to empower learners and educators worldwide.
