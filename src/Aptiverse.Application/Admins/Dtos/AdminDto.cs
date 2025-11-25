@@ -6,6 +6,6 @@ namespace Aptiverse.Application.Admins.Dtos
     public class AdminDto
     {
         [DataMember(Name = "id")] public long Id { get; set; }
-        [DataMember(Name = "userId")] public string UserId { get; set; }
+        [DataMember(Name = "userId")] public string? UserId { get; set; }
     }
 }

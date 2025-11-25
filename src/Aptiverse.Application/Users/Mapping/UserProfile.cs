@@ -1,5 +1,5 @@
 ﻿using Aptiverse.Application.Users.Dtos;
-using Aptiverse.Domain.Models.Users;
+using Aptiverse.Domain.Models;
 using AutoMapper;
 
 namespace Aptiverse.Application.Users.Mapping
@@ -8,7 +8,7 @@ namespace Aptiverse.Application.Users.Mapping
     {
         public UserProfile()
         {
-            CreateMap<ApplicationUser, UserDto>().ReverseMap();
+            CreateMap<User, UserDto>().ReverseMap();
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using System.IO;
 
 namespace Aptiverse.Infrastructure.Data
 {
@@ -10,7 +9,7 @@ namespace Aptiverse.Infrastructure.Data
         public ApplicationDbContext CreateDbContext(string[] args)
         {
             var configuration = new ConfigurationBuilder()
-                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Aptiverse.Api.Web"))
+                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Aptiverse.Auth"))
                 .AddJsonFile("appsettings.json", optional: false)
                 .AddEnvironmentVariables()
                 .Build();

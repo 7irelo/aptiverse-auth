@@ -1,13 +1,13 @@
 ﻿using Aptiverse.Application.Students.Dtos;
 using Aptiverse.Domain.Interfaces;
-using Aptiverse.Domain.Models.Users;
+using Aptiverse.Domain.Models;
 using AutoMapper;
 
 namespace Aptiverse.Application.Students.Services
 {
-    public class StudentService(IRepository<ApplicationUser> repository, IMapper mapper) : IStudentService
+    public class StudentService(IRepository<User> repository, IMapper mapper) : IStudentService
     {
-        private readonly IRepository<ApplicationUser> _repository = repository;
+        private readonly IRepository<User> _repository = repository;
         private readonly IMapper _mapper = mapper;
 
         public Task<StudentDto> CreateStudentAsync(StudentDto studentDto)

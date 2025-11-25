@@ -2,9 +2,9 @@
 using Aptiverse.Application.Users.Dtos;
 using Aptiverse.Core.Dtos;
 using Aptiverse.Core.Exceptions;
-using Aptiverse.Domain.Models.Users;
+using Aptiverse.Core.Services;
+using Aptiverse.Domain.Models;
 using Aptiverse.Infrastructure.Data;
-using Aptiverse.Infrastructure.Services;
 using Aptiverse.Infrastructure.Utilities;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
@@ -17,7 +17,7 @@ using System.Security.Claims;
 namespace Aptiverse.Application.Auth.Services
 {
     public class AuthService(
-        UserManager<ApplicationUser> userManager,
+        UserManager<User> userManager,
         ApplicationDbContext dbContext,
         IMapper mapper,
         ITokenProvider tokenProvider,
@@ -26,9 +26,9 @@ namespace Aptiverse.Application.Auth.Services
         IHttpContextAccessor httpContextAccessor,
         ILogger<AuthService> logger,
         IEmailSender emailSender,
-        SignInManager<ApplicationUser> signInManager) : IAuthService
+        SignInManager<User> signInManager) : IAuthService
     {
-        private readonly UserManager<ApplicationUser> _userManager = userManager;
+        private readonly UserManager<User> _userManager = userManager;
         private readonly ApplicationDbContext _dbContext = dbContext;
         private readonly IMapper _mapper = mapper;
         private readonly ITokenProvider _tokenProvider = tokenProvider;
@@ -37,7 +37,7 @@ namespace Aptiverse.Application.Auth.Services
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         private readonly ILogger<AuthService> _logger = logger;
         private readonly IEmailSender _emailSender = emailSender;
-        private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
+        private readonly SignInManager<User> _signInManager = signInManager;
 
         public async Task<UserDto> GetCurrentUserAsync(ClaimsPrincipal loggedInUser)
         {
@@ -68,7 +68,7 @@ namespace Aptiverse.Application.Auth.Services
                 var userId = validatedPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
                 _logger.LogInformation("GetCurrentUserAsync: Token validated for user {UserId}", userId);
 
-                var isTokenValid = await _tokenStorageService.IsTokenValidAsync(userId, token);
+                var isTokenValid = await _tokenStorageService.IsTokenValidAsync(userId ?? string.Empty, token);
                 if (!isTokenValid)
                 {
                     _logger.LogWarning("GetCurrentUserAsync: Token not found in storage for user {UserId}", userId);
@@ -94,8 +94,7 @@ namespace Aptiverse.Application.Auth.Services
                     PhoneNumber = user.PhoneNumber,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Roles = [.. roles],
-                    UserType = roles.FirstOrDefault() ?? "User"
+                    Roles = [.. roles]
                 };
             }
             catch (Exception ex)
@@ -107,7 +106,7 @@ namespace Aptiverse.Application.Auth.Services
 
         public async Task<TokenDto<UserDto>> RegisterUserAsync(RegisterDto registerDto)
         {
-            var user = _mapper.Map<ApplicationUser>(registerDto);
+            var user = _mapper.Map<User>(registerDto);
             user.CreatedAt = DateTime.UtcNow;
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
@@ -316,7 +315,7 @@ namespace Aptiverse.Application.Auth.Services
                         </body>
                     </html>";
 
-                await _emailSender.SendEmailAsync(user.Email, "Confirm Your Email - Aptiverse", htmlMessage);
+                await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Confirm Your Email - Aptiverse", htmlMessage);
 
                 return new TokenDto<UserDto>
                 {
@@ -329,7 +328,6 @@ namespace Aptiverse.Application.Auth.Services
                         Email = user.Email,
                         FirstName = user.FirstName,
                         LastName = user.LastName,
-                        UserType = registerDto.UserType,
                     },
                     Message = $"User registered successfully as {registerDto.UserType}. Please check your email to confirm your account."
                 };
@@ -366,7 +364,6 @@ namespace Aptiverse.Application.Auth.Services
                     Email = user.Email,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    UserType = roles.FirstOrDefault() ?? "User",
                 },
                 Message = "Login successful"
             };
@@ -404,7 +401,6 @@ namespace Aptiverse.Application.Auth.Services
                         Email = user.Email,
                         FirstName = user.FirstName,
                         LastName = user.LastName,
-                        UserType = roles.FirstOrDefault() ?? "User",
                     },
                     Message = "Token Refresh Successful"
                 };
@@ -584,12 +580,7 @@ namespace Aptiverse.Application.Auth.Services
                 throw new PasswordResetException("Password must be at least 6 characters long");
             }
 
-            var user = await _userManager.FindByIdAsync(resetPasswordDto.UserId);
-            if (user == null)
-            {
-                throw new InvalidResetTokenException();
-            }
-
+            var user = await _userManager.FindByIdAsync(resetPasswordDto.UserId) ?? throw new InvalidResetTokenException();
             try
             {
                 var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.ResetToken, resetPasswordDto.NewPassword);
@@ -655,7 +646,10 @@ namespace Aptiverse.Application.Auth.Services
                 var userId = _tokenProvider.GetUserIdFromToken(token);
                 await _tokenStorageService.RevokeTokenAsync(userId, token);
 
-                _logger.LogInformation("User {UserId} logged out successfully", userId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("User {UserId} logged out successfully, token revoked", userId);
+                }
 
                 return new { message = "Logged out successfully" };
             }
@@ -669,7 +663,7 @@ namespace Aptiverse.Application.Auth.Services
             }
         }
 
-        private string ExtractTokenFromHeader()
+        private string? ExtractTokenFromHeader()
         {
             var httpContext = _httpContextAccessor.HttpContext;
             var authHeader = httpContext?.Request.Headers["Authorization"].FirstOrDefault();
@@ -680,7 +674,7 @@ namespace Aptiverse.Application.Auth.Services
             return authHeader.Substring("Bearer ".Length).Trim();
         }
 
-        private bool IsValidEmail(string email)
+        private static bool IsValidEmail(string email)
         {
             try
             {

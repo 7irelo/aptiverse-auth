@@ -1,6 +1,6 @@
 ﻿using Aptiverse.Application.Parents.Dtos;
 
-namespace Aptiverse.Application.Parents.Services
+namespace Aptiverse.Core.Services.Services
 {
     public interface IParentService
     {

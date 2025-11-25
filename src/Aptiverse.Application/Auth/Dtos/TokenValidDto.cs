@@ -7,6 +7,6 @@ namespace Aptiverse.Application.Auth.Dtos
     public class TokenValidDto
     {
         [DataMember(Name = "valid")] public bool Valid { get; set; }
-        [DataMember(Name = "Claims")] public IEnumerable Claims { get; set; }
+        [DataMember(Name = "claims")] public IEnumerable? Claims { get; set; }
     }
 }

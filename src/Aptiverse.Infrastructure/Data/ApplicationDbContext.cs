@@ -1,26 +1,17 @@
-﻿using Aptiverse.Domain.Models.Admins;
-using Aptiverse.Domain.Models.Auth;
-using Aptiverse.Domain.Models.Junctions;
-using Aptiverse.Domain.Models.Parents;
-using Aptiverse.Domain.Models.Students;
-using Aptiverse.Domain.Models.Superusers;
-using Aptiverse.Domain.Models.Teachers;
-using Aptiverse.Domain.Models.Users;
+﻿using Aptiverse.Domain.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aptiverse.Infrastructure.Data
 {
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<User>(options)
     {
         public DbSet<Superuser> Superusers { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<Parent> Parents { get; set; }
         public DbSet<Teacher> Teachers { get; set; }
         public DbSet<Admin> Admins { get; set; }
-        public DbSet<BlacklistedToken> BlacklistedTokens { get; set; }
 
-        // Junction tables
         public DbSet<StudentParent> StudentParents { get; set; }
         public DbSet<StudentTeacher> StudentTeachers { get; set; }
         public DbSet<StudentAdmin> StudentAdmins { get; set; }
@@ -29,15 +20,9 @@ namespace Aptiverse.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<ApplicationUser>()
+            modelBuilder.Entity<User>()
                 .Property(u => u.Id)
                 .ValueGeneratedOnAdd();
-
-            modelBuilder.Entity<BlacklistedToken>(entity =>
-            {
-                entity.HasKey(e => e.TokenHash);
-                entity.HasIndex(e => e.Expiry);
-            });
 
             modelBuilder.Entity<Superuser>()
                 .HasOne(a => a.User)
@@ -114,7 +99,6 @@ namespace Aptiverse.Infrastructure.Data
                 .HasForeignKey(sa => sa.AdminId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // PostgreSQL specific configuration
             if (Database.IsNpgsql())
             {
                 modelBuilder.HasPostgresExtension("uuid-ossp");

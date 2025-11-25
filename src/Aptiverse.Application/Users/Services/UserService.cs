@@ -1,23 +1,22 @@
 ﻿using Aptiverse.Application.Users.Dtos;
-using Aptiverse.Domain.Models.Users;
+using Aptiverse.Domain.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace Aptiverse.Application.Users.Services
 {
-    public class UserService(UserManager<ApplicationUser> userManager, IMapper mapper) : IUserService
+    public class UserService(UserManager<User> userManager, IMapper mapper) : IUserService
     {
-        private readonly UserManager<ApplicationUser> _userManager = userManager;
+        private readonly UserManager<User> _userManager = userManager;
         private readonly IMapper _mapper = mapper;
 
         public async Task<UserDto> CreateUserAsync(UserDto userDto)
         {
-            var user = _mapper.Map<ApplicationUser>(userDto);
+            var user = _mapper.Map<User>(userDto);
             user.CreatedAt = DateTime.UtcNow;
 
-            var result = await _userManager.CreateAsync(user, userDto.Password);
+            var result = await _userManager.CreateAsync(user, userDto.Password ?? string.Empty);
 
             if (!result.Succeeded)
             {
@@ -92,7 +91,7 @@ namespace Aptiverse.Application.Users.Services
                 if (dtoValue == null || (dtoValue is string str && string.IsNullOrWhiteSpace(str)))
                     continue;
 
-                var userProperty = typeof(ApplicationUser).GetProperty(dtoProperty.Name);
+                var userProperty = typeof(User).GetProperty(dtoProperty.Name);
                 if (userProperty != null && userProperty.CanWrite)
                 {
                     userProperty.SetValue(user, dtoValue);

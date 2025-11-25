@@ -1,5 +1,5 @@
 ﻿using Aptiverse.Application.Auth.Dtos;
-using Aptiverse.Domain.Models.Users;
+using Aptiverse.Domain.Models;
 using AutoMapper;
 
 namespace Aptiverse.Application.Auth.Mapping
@@ -8,7 +8,7 @@ namespace Aptiverse.Application.Auth.Mapping
     {
         public AuthProfile()
         {
-            CreateMap<ApplicationUser, RegisterDto>().ReverseMap();
+            CreateMap<User, RegisterDto>().ReverseMap();
         }
     }
 }
