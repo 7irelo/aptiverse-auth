@@ -1,8 +1,4 @@
-﻿using Aptiverse.Domain.Models.Admins;
-using Aptiverse.Domain.Models.Parents;
-using Aptiverse.Domain.Models.Students;
-using Aptiverse.Domain.Models.Superusers;
-using Aptiverse.Domain.Models.Teachers;
+﻿using Aptiverse.Domain.Models;
 using Aptiverse.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 

@@ -2,8 +2,9 @@
 using Aptiverse.Application.Auth.Services;
 using Aptiverse.Application.Parents.Services;
 using Aptiverse.Application.Students.Services;
-using Aptiverse.Application.Teachers.Services;
+using Aptiverse.Application.Taechers.Services;
 using Aptiverse.Application.Users.Services;
+using Aptiverse.Core.Services.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aptiverse.Application

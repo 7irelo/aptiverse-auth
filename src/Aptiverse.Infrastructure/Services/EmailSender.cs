@@ -1,4 +1,5 @@
-﻿using Aptiverse.Infrastructure.Utilities;
+﻿using Aptiverse.Core.Services;
+using Aptiverse.Infrastructure.Utilities;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;
@@ -37,11 +38,17 @@ namespace Aptiverse.Infrastructure.Services
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
 
-                _logger.LogInformation($"Email sent to {email}");
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Email sent to {Email}", email);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Failed to send email to {email}");
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(ex, "Failed to send email to {Email}", email);
+                }
                 throw;
             }
         }

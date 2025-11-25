@@ -1,4 +1,5 @@
-﻿using Aptiverse.Domain.Models.Users;
+﻿using Aptiverse.Core.Services;
+using Aptiverse.Domain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -13,35 +14,34 @@ namespace Aptiverse.Infrastructure.Services
     {
         private readonly IConfiguration _configuration;
         private readonly SymmetricSecurityKey _key;
-        private readonly ITokenStorageService _tokenStorageService;
         private readonly ILogger<TokenProvider> _logger;
+        private readonly ITokenStorageService _tokenStorageService;
+
 
         public TokenProvider(
             IConfiguration configuration,
-            ITokenStorageService tokenStorageService,
-            ILogger<TokenProvider> logger)
+            ILogger<TokenProvider> logger,
+            ITokenStorageService tokenStorageService)
         {
             _configuration = configuration;
-            _tokenStorageService = tokenStorageService;
             _logger = logger;
+            _tokenStorageService = tokenStorageService;
             _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         }
 
-        public async Task<string> GenerateJwtTokenAsync(ApplicationUser user, IList<string> roles)
+        public async Task<string> GenerateJwtTokenAsync(User user, IList<string> roles)
         {
-            if (user == null)
-                throw new ArgumentNullException(nameof(user));
-            if (roles == null)
-                throw new ArgumentNullException(nameof(roles));
+            ArgumentNullException.ThrowIfNull(user);
+            ArgumentNullException.ThrowIfNull(roles);
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName!),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("firstName", user.FirstName ?? ""),
-                new Claim("lastName", user.LastName ?? "")
+                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new(JwtRegisteredClaimNames.UniqueName, user.UserName!),
+                new(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new("firstName", user.FirstName ?? ""),
+                new("lastName", user.LastName ?? "")
             };
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
@@ -66,7 +66,10 @@ namespace Aptiverse.Infrastructure.Services
         {
             if (string.IsNullOrWhiteSpace(token))
             {
-                _logger.LogWarning("Token validation failed: Token is null or empty");
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Token validation failed: Token is null or empty");
+                }
                 return null;
             }
 
@@ -83,49 +86,64 @@ namespace Aptiverse.Infrastructure.Services
                     ValidAudience = _configuration["Jwt:Audience"],
                     IssuerSigningKey = _key,
                     ClockSkew = TimeSpan.Zero,
-                    // Add this to ensure proper claim mapping
                     NameClaimType = ClaimTypes.NameIdentifier
                 };
 
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
 
-                // Look for user ID using multiple possible claim types
                 var userId = principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
                             principal.FindFirstValue(ClaimTypes.NameIdentifier);
 
                 if (string.IsNullOrEmpty(userId))
                 {
-                    _logger.LogWarning("Token validation failed: User ID not found in token. Available claims: {Claims}",
-                        string.Join(", ", principal.Claims.Select(c => $"{c.Type}:{c.Value}")));
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("Token validation failed: User ID not found in token. Available claims: {Claims}",
+                            string.Join(", ", principal.Claims.Select(c => $"{c.Type}:{c.Value}")));
+                    }
                     throw new SecurityTokenException("Invalid token claims - missing user ID");
                 }
 
-                _logger.LogDebug("Token validation successful for user {UserId}", userId);
-
-                // Check Redis token storage
                 var isValid = await _tokenStorageService.IsTokenValidAsync(userId, token);
+
                 if (!isValid)
                 {
-                    _logger.LogWarning("Token validation failed: Token revoked or not found in Redis for user {UserId}", userId);
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("Token validation failed: Token has been revoked for user {UserId}", userId);
+                    }
                     throw new SecurityTokenException("Token has been revoked");
                 }
 
-                _logger.LogInformation("Token fully validated for user {UserId}", userId);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Token validation successful for user {UserId}", userId);
+                }
+
                 return principal;
             }
             catch (SecurityTokenExpiredException ex)
             {
-                _logger.LogWarning("Token validation failed: Token expired - {Message}", ex.Message);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Token validation failed: Token expired - {Message}", ex.Message);
+                }
                 throw;
             }
             catch (SecurityTokenException ex)
             {
-                _logger.LogWarning("Token validation failed: Security token error - {Message}", ex.Message);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Token validation failed: Security token error - {Message}", ex.Message);
+                }
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Token validation failed: Unexpected error");
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(ex, "Token validation failed: Unexpected error");
+                }
                 return null;
             }
         }
@@ -155,7 +173,6 @@ namespace Aptiverse.Infrastructure.Services
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
 
-                // Read token without validation (we just want expiration)
                 var jwtToken = tokenHandler.ReadJwtToken(token);
 
                 if (jwtToken.ValidTo == DateTime.MinValue)
@@ -192,8 +209,6 @@ namespace Aptiverse.Infrastructure.Services
                 throw new SecurityTokenException("Invalid token format", ex);
             }
         }
-
-        // Additional helper method to get all claims from token without validation
         public IEnumerable<Claim> GetClaimsFromToken(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
@@ -211,8 +226,6 @@ namespace Aptiverse.Infrastructure.Services
                 throw new SecurityTokenException("Invalid token format", ex);
             }
         }
-
-        // Helper method to check if token is about to expire (for refresh scenarios)
         public bool IsTokenExpiringSoon(string token, int minutesThreshold = 5)
         {
             try
@@ -222,7 +235,7 @@ namespace Aptiverse.Infrastructure.Services
             }
             catch
             {
-                return true; // If we can't read expiration, treat as expired
+                return true;
             }
         }
     }

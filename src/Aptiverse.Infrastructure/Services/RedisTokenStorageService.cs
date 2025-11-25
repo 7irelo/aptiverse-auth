@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Aptiverse.Core.Services;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Security.Cryptography;
 using System.Text;
@@ -6,20 +7,13 @@ using System.Text.Json;
 
 namespace Aptiverse.Infrastructure.Services
 {
-    public class RedisTokenStorageService : ITokenStorageService
+    public class RedisTokenStorageService(
+        IConnectionMultiplexer redis,
+        ILogger<RedisTokenStorageService> logger) : ITokenStorageService
     {
-        private readonly IConnectionMultiplexer _redis;
-        private readonly ILogger<RedisTokenStorageService> _logger;
-        private readonly IDatabase _database;
-
-        public RedisTokenStorageService(
-            IConnectionMultiplexer redis,
-            ILogger<RedisTokenStorageService> logger)
-        {
-            _redis = redis;
-            _logger = logger;
-            _database = redis.GetDatabase();
-        }
+        private readonly IConnectionMultiplexer _redis = redis;
+        private readonly ILogger<RedisTokenStorageService> _logger = logger;
+        private readonly IDatabase _database = redis.GetDatabase();
 
         public async Task StoreTokenAsync(string userId, string token, DateTime expiry)
         {
@@ -46,11 +40,9 @@ namespace Aptiverse.Infrastructure.Services
 
                 await _database.StringSetAsync(tokenKey, json, expiryTimeSpan);
 
-                // Also add to user's token set for easy management
                 var userTokensKey = GetUserTokensKey(userId);
                 await _database.SetAddAsync(userTokensKey, tokenHash);
 
-                // Set expiration on user tokens set as well
                 await _database.KeyExpireAsync(userTokensKey, expiryTimeSpan);
 
                 _logger.LogInformation("Token stored in Redis for user {UserId} until {Expiry}", userId, expiry);
@@ -71,8 +63,6 @@ namespace Aptiverse.Infrastructure.Services
             {
                 var tokenHash = HashToken(token);
                 var tokenKey = GetTokenKey(userId, tokenHash);
-
-                // Check if token exists and get its data
                 var tokenJson = await _database.StringGetAsync(tokenKey);
 
                 if (tokenJson.IsNullOrEmpty)
@@ -81,8 +71,6 @@ namespace Aptiverse.Infrastructure.Services
                     return false;
                 }
 
-                // Token exists and Redis automatically handles expiration
-                // If we can retrieve it, it's still valid
                 _logger.LogDebug("Token found and valid for user {UserId}", userId);
                 return true;
             }
@@ -103,11 +91,8 @@ namespace Aptiverse.Infrastructure.Services
                 var tokenHash = HashToken(token);
                 var tokenKey = GetTokenKey(userId, tokenHash);
                 var userTokensKey = GetUserTokensKey(userId);
-
-                // Remove the token
                 await _database.KeyDeleteAsync(tokenKey);
 
-                // Remove from user's token set
                 await _database.SetRemoveAsync(userTokensKey, tokenHash);
 
                 _logger.LogInformation("Token revoked for user {UserId}", userId);
@@ -128,7 +113,6 @@ namespace Aptiverse.Infrastructure.Services
             {
                 var userTokensKey = GetUserTokensKey(userId);
 
-                // Get all token hashes for this user
                 var tokenHashes = await _database.SetMembersAsync(userTokensKey);
 
                 if (tokenHashes.Any())
@@ -141,7 +125,6 @@ namespace Aptiverse.Infrastructure.Services
                         keysToDelete.Add(tokenKey);
                     }
 
-                    // Delete all tokens in one transaction
                     await _database.KeyDeleteAsync(keysToDelete.ToArray());
 
                     _logger.LogInformation("Revoked all {TokenCount} tokens for user {UserId}", tokenHashes.Length, userId);
@@ -160,7 +143,6 @@ namespace Aptiverse.Infrastructure.Services
 
         public async Task CleanExpiredTokensAsync(string userId)
         {
-            // Redis automatically expires keys, so this is mostly for cleanup of user token sets
             if (string.IsNullOrEmpty(userId))
                 return;
 
@@ -180,15 +162,12 @@ namespace Aptiverse.Infrastructure.Services
                     }
                 }
 
-                // If there are expired tokens in the set, update it
                 if (validTokenHashes.Count != tokenHashes.Length)
                 {
                     await _database.KeyDeleteAsync(userTokensKey);
                     if (validTokenHashes.Any())
                     {
                         await _database.SetAddAsync(userTokensKey, validTokenHashes.ToArray());
-
-                        // Set expiration based on the longest-living token
                         var longestExpiry = await GetLongestTokenExpiryAsync(userId, validTokenHashes);
                         if (longestExpiry.HasValue)
                         {
