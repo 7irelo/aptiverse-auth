@@ -1,4 +1,5 @@
 ﻿using Aptiverse.Domain.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,99 +7,133 @@ namespace Aptiverse.Infrastructure.Data
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<User>(options)
     {
-        public DbSet<Superuser> Superusers { get; set; }
-        public DbSet<Student> Students { get; set; }
-        public DbSet<Parent> Parents { get; set; }
-        public DbSet<Teacher> Teachers { get; set; }
-        public DbSet<Admin> Admins { get; set; }
-
-        public DbSet<StudentParent> StudentParents { get; set; }
-        public DbSet<StudentTeacher> StudentTeachers { get; set; }
-        public DbSet<StudentAdmin> StudentAdmins { get; set; }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+            // DON'T call base.OnModelCreating(modelBuilder) - it overrides your changes
 
-            modelBuilder.Entity<User>()
-                .Property(u => u.Id)
-                .ValueGeneratedOnAdd();
+            // Configure Identity tables with your custom names and schema
+            modelBuilder.Entity<User>(b =>
+            {
+                b.ToTable("Users", "Identity");
+                b.HasKey(u => u.Id);
 
-            modelBuilder.Entity<Superuser>()
-                .HasOne(a => a.User)
-                .WithOne()
-                .HasForeignKey<Superuser>(a => a.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                // Add index configurations
+                b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex").IsUnique();
+                b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
 
-            modelBuilder.Entity<Admin>()
-                .HasOne(a => a.User)
-                .WithOne()
-                .HasForeignKey<Admin>(a => a.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                // Configure properties if needed
+                b.Property(u => u.Id).HasMaxLength(255).IsUnicode(false);
+                b.Property(u => u.UserName).HasMaxLength(256).IsUnicode(false);
+                b.Property(u => u.NormalizedUserName).HasMaxLength(256).IsUnicode(false);
+                b.Property(u => u.Email).HasMaxLength(256).IsUnicode(false);
+                b.Property(u => u.NormalizedEmail).HasMaxLength(256).IsUnicode(false);
+                b.Property(u => u.PasswordHash).HasMaxLength(255).IsUnicode(false);
+                b.Property(u => u.SecurityStamp).HasMaxLength(255).IsUnicode(false);
+                b.Property(u => u.ConcurrencyStamp).HasMaxLength(255).IsUnicode(false);
+                b.Property(u => u.PhoneNumber).HasMaxLength(255).IsUnicode(false);
+            });
 
-            modelBuilder.Entity<Parent>()
-                .HasOne(p => p.User)
-                .WithOne()
-                .HasForeignKey<Parent>(p => p.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<IdentityRole>(b =>
+            {
+                b.ToTable("Roles", "Identity");
+                b.HasKey(r => r.Id);
 
-            modelBuilder.Entity<Teacher>()
-                .HasOne(t => t.User)
-                .WithOne()
-                .HasForeignKey<Teacher>(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(r => r.NormalizedName).HasDatabaseName("RoleNameIndex").IsUnique();
 
-            modelBuilder.Entity<Student>()
-                .HasOne(s => s.User)
-                .WithOne()
-                .HasForeignKey<Student>(s => s.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                b.Property(r => r.Id).HasMaxLength(255).IsUnicode(false);
+                b.Property(r => r.Name).HasMaxLength(256).IsUnicode(false);
+                b.Property(r => r.NormalizedName).HasMaxLength(256).IsUnicode(false);
+                b.Property(r => r.ConcurrencyStamp).HasMaxLength(255).IsUnicode(false);
+            });
 
-            modelBuilder.Entity<StudentParent>()
-                .HasKey(sp => new { sp.StudentId, sp.ParentId });
+            modelBuilder.Entity<IdentityUserRole<string>>(b =>
+            {
+                b.ToTable("UserRoles", "Identity");
+                b.HasKey(r => new { r.UserId, r.RoleId });
 
-            modelBuilder.Entity<StudentParent>()
-                .HasOne(sp => sp.Student)
-                .WithMany(s => s.StudentParents)
-                .HasForeignKey(sp => sp.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                b.Property(r => r.UserId).HasMaxLength(255).IsUnicode(false);
+                b.Property(r => r.RoleId).HasMaxLength(255).IsUnicode(false);
+            });
 
-            modelBuilder.Entity<StudentParent>()
-                .HasOne(sp => sp.Parent)
-                .WithMany(p => p.StudentParents)
-                .HasForeignKey(sp => sp.ParentId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<IdentityUserClaim<string>>(b =>
+            {
+                b.ToTable("UserClaims", "Identity");
+                b.HasKey(uc => uc.Id);
 
-            modelBuilder.Entity<StudentTeacher>()
-                .HasKey(st => new { st.StudentId, st.TeacherId });
+                b.Property(uc => uc.UserId).HasMaxLength(255).IsUnicode(false);
+                b.Property(uc => uc.ClaimType).HasMaxLength(255).IsUnicode(false);
+                b.Property(uc => uc.ClaimValue).HasMaxLength(255).IsUnicode(false);
+            });
 
-            modelBuilder.Entity<StudentTeacher>()
-                .HasOne(st => st.Student)
-                .WithMany(s => s.StudentTeachers)
-                .HasForeignKey(st => st.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<IdentityUserLogin<string>>(b =>
+            {
+                b.ToTable("UserLogins", "Identity");
+                b.HasKey(l => new { l.LoginProvider, l.ProviderKey });
 
-            modelBuilder.Entity<StudentTeacher>()
-                .HasOne(st => st.Teacher)
-                .WithMany(t => t.StudentTeachers)
-                .HasForeignKey(st => st.TeacherId)
-                .OnDelete(DeleteBehavior.Cascade);
+                b.Property(l => l.LoginProvider).HasMaxLength(255).IsUnicode(false);
+                b.Property(l => l.ProviderKey).HasMaxLength(255).IsUnicode(false);
+                b.Property(l => l.UserId).HasMaxLength(255).IsUnicode(false);
+            });
 
-            modelBuilder.Entity<StudentAdmin>()
-                .HasKey(sa => new { sa.StudentId, sa.AdminId });
+            modelBuilder.Entity<IdentityRoleClaim<string>>(b =>
+            {
+                b.ToTable("RoleClaims", "Identity");
+                b.HasKey(rc => rc.Id);
 
-            modelBuilder.Entity<StudentAdmin>()
-                .HasOne(sa => sa.Student)
-                .WithMany(s => s.StudentAdmins)
-                .HasForeignKey(sa => sa.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                b.Property(rc => rc.RoleId).HasMaxLength(255).IsUnicode(false);
+                b.Property(rc => rc.ClaimType).HasMaxLength(255).IsUnicode(false);
+                b.Property(rc => rc.ClaimValue).HasMaxLength(255).IsUnicode(false);
+            });
 
-            modelBuilder.Entity<StudentAdmin>()
-                .HasOne(sa => sa.Admin)
-                .WithMany(a => a.StudentAdmins)
-                .HasForeignKey(sa => sa.AdminId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<IdentityUserToken<string>>(b =>
+            {
+                b.ToTable("UserTokens", "Identity");
+                b.HasKey(t => new { t.UserId, t.LoginProvider, t.Name });
 
+                b.Property(t => t.UserId).HasMaxLength(255).IsUnicode(false);
+                b.Property(t => t.LoginProvider).HasMaxLength(255).IsUnicode(false);
+                b.Property(t => t.Name).HasMaxLength(255).IsUnicode(false);
+                b.Property(t => t.Value).HasMaxLength(255).IsUnicode(false);
+            });
+
+            // Configure relationships
+            modelBuilder.Entity<IdentityUserRole<string>>()
+                .HasOne<IdentityRole>()
+                .WithMany()
+                .HasForeignKey(ur => ur.RoleId)
+                .IsRequired();
+
+            modelBuilder.Entity<IdentityUserRole<string>>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(ur => ur.UserId)
+                .IsRequired();
+
+            modelBuilder.Entity<IdentityUserClaim<string>>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(uc => uc.UserId)
+                .IsRequired();
+
+            modelBuilder.Entity<IdentityUserLogin<string>>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(ul => ul.UserId)
+                .IsRequired();
+
+            modelBuilder.Entity<IdentityRoleClaim<string>>()
+                .HasOne<IdentityRole>()
+                .WithMany()
+                .HasForeignKey(rc => rc.RoleId)
+                .IsRequired();
+
+            modelBuilder.Entity<IdentityUserToken<string>>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(ut => ut.UserId)
+                .IsRequired();
+
+            // Your additional configuration
             if (Database.IsNpgsql())
             {
                 modelBuilder.HasPostgresExtension("uuid-ossp");

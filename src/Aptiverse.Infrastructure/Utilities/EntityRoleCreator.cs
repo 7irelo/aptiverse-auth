@@ -10,29 +10,29 @@ namespace Aptiverse.Infrastructure.Utilities
         {
             try
             {
-                switch (userType.ToLower())
-                {
-                    case "student":
-                        dbContext.Students.Add(new Student { UserId = userId });
-                        break;
-                    case "teacher":
-                        dbContext.Teachers.Add(new Teacher { UserId = userId });
-                        break;
-                    case "parent":
-                        dbContext.Parents.Add(new Parent { UserId = userId });
-                        break;
-                    case "admin":
-                        dbContext.Admins.Add(new Admin { UserId = userId });
-                        break;
-                    case "superuser":
-                        dbContext.Superusers.Add(new Superuser { UserId = userId });
-                        break;
-                    default:
-                        return IdentityResult.Failed(new IdentityError
-                        {
-                            Description = $"Invalid user type: {userType}. Must be Student, Teacher, Parent, Admin, or SuperUser."
-                        });
-                }
+                //switch (userType.ToLower())
+                //{
+                //    case "student":
+                //        dbContext.Students.Add(new Student { UserId = userId });
+                //        break;
+                //    case "teacher":
+                //        dbContext.Teachers.Add(new Teacher { UserId = userId });
+                //        break;
+                //    case "parent":
+                //        dbContext.Parents.Add(new Parent { UserId = userId });
+                //        break;
+                //    case "admin":
+                //        dbContext.Admins.Add(new Admin { UserId = userId });
+                //        break;
+                //    case "superuser":
+                //        dbContext.Superusers.Add(new Superuser { UserId = userId });
+                //        break;
+                //    default:
+                //        return IdentityResult.Failed(new IdentityError
+                //        {
+                //            Description = $"Invalid user type: {userType}. Must be Student, Teacher, Parent, Admin, or SuperUser."
+                //        });
+                //}
 
                 await dbContext.SaveChangesAsync();
                 return IdentityResult.Success;

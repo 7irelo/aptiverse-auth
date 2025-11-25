@@ -12,7 +12,7 @@ namespace Aptiverse.Infrastructure.Data
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            await dbContext.Database.MigrateAsync();
+            //await dbContext.Database.MigrateAsync();
 
             var roles = new[] { "Student", "Teacher", "Parent", "Admin", "Superuser" };
 
