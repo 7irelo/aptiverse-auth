@@ -21,7 +21,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 5000
 
-RUN adduser --disabled-password --home /app --gecos '' appuser && chown -R appuser:appuser /app
+RUN useradd --create-home --home-dir /app --shell /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
 
 COPY --from=publish /app/publish .
