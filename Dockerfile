@@ -1,22 +1,21 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ["Aptiverse.Api.sln", "./"]
-COPY ["src/Aptiverse.Api.Web/Aptiverse.Api.Web.csproj", "src/Aptiverse.Api.Web/"]
+COPY ["Aptiverse.Auth.slnx", "./"]
+COPY ["src/Aptiverse.Auth/Aptiverse.Auth.csproj", "src/Aptiverse.Auth/"]
 COPY ["src/Aptiverse.Application/Aptiverse.Application.csproj", "src/Aptiverse.Application/"]
 COPY ["src/Aptiverse.Core/Aptiverse.Core.csproj", "src/Aptiverse.Core/"]
 COPY ["src/Aptiverse.Domain/Aptiverse.Domain.csproj", "src/Aptiverse.Domain/"]
 COPY ["src/Aptiverse.Infrastructure/Aptiverse.Infrastructure.csproj", "src/Aptiverse.Infrastructure/"]
-COPY ["src/Aptiverse.Benchmarks/Aptiverse.Benchmarks.csproj", "src/Aptiverse.Benchmarks/"]
 
-RUN dotnet restore "Aptiverse.Api.sln"
+RUN dotnet restore "Aptiverse.Auth.slnx"
 
 COPY . .
-WORKDIR "/src/src/Aptiverse.Api.Web"
-RUN dotnet build "Aptiverse.Api.Web.csproj" -c Release -o /app/build
+WORKDIR "/src/src/Aptiverse.Auth"
+RUN dotnet build "Aptiverse.Auth.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Aptiverse.Api.Web.csproj" -c Release -o /app/publish
+RUN dotnet publish "Aptiverse.Auth.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
@@ -26,4 +25,4 @@ RUN adduser --disabled-password --home /app --gecos '' appuser && chown -R appus
 USER appuser
 
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Aptiverse.Api.Web.dll", "--urls", "http://0.0.0.0:5000"]
+ENTRYPOINT ["dotnet", "Aptiverse.Auth.dll", "--urls", "http://0.0.0.0:5000"]
