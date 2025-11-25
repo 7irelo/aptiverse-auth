@@ -1,4 +1,4 @@
-name: Build Backend Only
+name: Build Auth Provider
 
 on:
   push:
