@@ -20,18 +20,18 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t aptiverse-backend .
-        docker save aptiverse-backend | gzip > backend-image.tar.gz
+        docker build -t aptiverse-auth-provider .
+        docker save aptiverse-auth-provider | gzip > auth-provider-image.tar.gz
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
-        name: backend-image
-        path: backend-image.tar.gz
+        name: auth-provider-image
+        path: auth-provider-image.tar.gz
         retention-days: 1
 
     - name: List image info
       run: |
         echo "Docker image built successfully:"
-        docker images aptiverse-backend
-        echo "Artifact created: backend-image.tar.gz"
+        docker images aptiverse-auth-provider
+        echo "Artifact created: auth-provider-image.tar.gz"

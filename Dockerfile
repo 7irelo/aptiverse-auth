@@ -25,4 +25,4 @@ RUN useradd --create-home --home-dir /app --shell /bin/bash appuser && chown -R 
 USER appuser
 
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Aptiverse.Auth.dll", "--urls", "http://0.0.0.0:5000"]
+ENTRYPOINT ["dotnet", "Aptiverse.Auth.dll", "--urls", "http://0.0.0.0:5006"]

@@ -1,4 +1,5 @@
-﻿using Aptiverse.Application.Users.Dtos;
+﻿using Aptiverse.Application.Auth.Dtos;
+using Aptiverse.Application.Users.Dtos;
 using Aptiverse.Domain.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
@@ -11,12 +12,12 @@ namespace Aptiverse.Application.Users.Services
         private readonly UserManager<User> _userManager = userManager;
         private readonly IMapper _mapper = mapper;
 
-        public async Task<UserDto> CreateUserAsync(UserDto userDto)
+        public async Task<UserDto> CreateUserAsync(RegisterDto registerDto)
         {
-            var user = _mapper.Map<User>(userDto);
+            var user = _mapper.Map<User>(registerDto);
             user.CreatedAt = DateTime.UtcNow;
 
-            var result = await _userManager.CreateAsync(user, userDto.Password ?? string.Empty);
+            var result = await _userManager.CreateAsync(user, registerDto.Password ?? string.Empty);
 
             if (!result.Succeeded)
             {

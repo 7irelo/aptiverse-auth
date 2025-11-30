@@ -48,6 +48,7 @@ namespace Aptiverse.Infrastructure
             services.AddRedisServices(configuration);
 
             services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+            services.Configure<RabbitMQSettings>(configuration.GetSection("RabbitMQSettings"));
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<ITokenProvider, TokenProvider>();

@@ -12,7 +12,6 @@ namespace Aptiverse.Application.Users.Dtos
         [DataMember(Name = "userName ")] public string? UserName { get; set; }
         [DataMember(Name = "email")] public string? Email { get; set; }
         [DataMember(Name = "phoneNumber")] public string? PhoneNumber { get; set; }
-        [DataMember(Name = "password", EmitDefaultValue = false)] public string? Password { get; set; }
         [DataMember(Name = "roles")] public IList<string>? Roles { get; set; }
     }
 }
