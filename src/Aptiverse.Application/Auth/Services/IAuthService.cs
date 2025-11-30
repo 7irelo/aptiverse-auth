@@ -8,7 +8,7 @@ namespace Aptiverse.Application.Auth.Services
     public interface IAuthService
     {
         Task<UserDto> GetCurrentUserAsync(ClaimsPrincipal loggedInUser);
-        Task<TokenDto<UserDto>> RegisterUserAsync(RegisterDto registerDto);
+        Task RegisterUserAsync(RegisterDto registerDto);
         Task<TokenDto<UserDto>> LoginUserAsync(LoginDto dto);
         Task<TokenDto<UserDto>> RefreshTokenAsync(ClaimsPrincipal loggedInUser);
         Task<TokenValidDto> ValidateTokenAsync(ValidateTokenDto validateTokenDto);
@@ -16,5 +16,6 @@ namespace Aptiverse.Application.Auth.Services
         Task<object> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
         Task<object> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
         Task<object> LogoutUserAsync(ClaimsPrincipal loggedInUser);
+        Task ConfirmEmail(string userId, string token);
     }
 }

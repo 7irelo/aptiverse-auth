@@ -9,19 +9,14 @@ namespace Aptiverse.Infrastructure.Data
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // DON'T call base.OnModelCreating(modelBuilder) - it overrides your changes
-
-            // Configure Identity tables with your custom names and schema
             modelBuilder.Entity<User>(b =>
             {
                 b.ToTable("Users", "Identity");
                 b.HasKey(u => u.Id);
 
-                // Add index configurations
                 b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex").IsUnique();
                 b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
 
-                // Configure properties if needed
                 b.Property(u => u.Id).HasMaxLength(255).IsUnicode(false);
                 b.Property(u => u.UserName).HasMaxLength(256).IsUnicode(false);
                 b.Property(u => u.NormalizedUserName).HasMaxLength(256).IsUnicode(false);
@@ -96,7 +91,6 @@ namespace Aptiverse.Infrastructure.Data
                 b.Property(t => t.Value).HasMaxLength(255).IsUnicode(false);
             });
 
-            // Configure relationships
             modelBuilder.Entity<IdentityUserRole<string>>()
                 .HasOne<IdentityRole>()
                 .WithMany()
@@ -133,7 +127,6 @@ namespace Aptiverse.Infrastructure.Data
                 .HasForeignKey(ut => ut.UserId)
                 .IsRequired();
 
-            // Your additional configuration
             if (Database.IsNpgsql())
             {
                 modelBuilder.HasPostgresExtension("uuid-ossp");

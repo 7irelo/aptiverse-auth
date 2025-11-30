@@ -2,6 +2,6 @@
 {
     public interface IEmailSender
     {
-        Task SendEmailAsync(string email, string subject, string htmlMessage);
+        Task SendTemplateEmailAsync(string email, string subject, string templateType, object templateData);
     }
 }

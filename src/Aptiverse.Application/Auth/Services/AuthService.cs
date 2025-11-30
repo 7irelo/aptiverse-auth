@@ -9,6 +9,7 @@ using Aptiverse.Infrastructure.Utilities;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -25,8 +26,7 @@ namespace Aptiverse.Application.Auth.Services
         ITokenStorageService tokenStorageService,
         IHttpContextAccessor httpContextAccessor,
         ILogger<AuthService> logger,
-        IEmailSender emailSender,
-        SignInManager<User> signInManager) : IAuthService
+        IEmailSender emailSender) : IAuthService
     {
         private readonly UserManager<User> _userManager = userManager;
         private readonly ApplicationDbContext _dbContext = dbContext;
@@ -37,53 +37,17 @@ namespace Aptiverse.Application.Auth.Services
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         private readonly ILogger<AuthService> _logger = logger;
         private readonly IEmailSender _emailSender = emailSender;
-        private readonly SignInManager<User> _signInManager = signInManager;
 
         public async Task<UserDto> GetCurrentUserAsync(ClaimsPrincipal loggedInUser)
         {
             if (loggedInUser?.Identity?.IsAuthenticated != true)
             {
-                _logger.LogWarning("GetCurrentUserAsync: User is not authenticated");
                 throw new AuthenticationException("User is not authenticated");
             }
 
             try
             {
-                var token = ExtractTokenFromHeader();
-                if (string.IsNullOrEmpty(token))
-                {
-                    _logger.LogWarning("GetCurrentUserAsync: No token provided in header");
-                    throw new AuthenticationException("No token provided");
-                }
-
-                _logger.LogInformation("GetCurrentUserAsync: Extracted token, validating...");
-
-                var validatedPrincipal = await _tokenProvider.ValidateTokenAsync(token);
-                if (validatedPrincipal == null)
-                {
-                    _logger.LogWarning("GetCurrentUserAsync: Token validation returned null");
-                    throw new AuthenticationException("Invalid or expired token");
-                }
-
-                var userId = validatedPrincipal.FindFirstValue(ClaimTypes.NameIdentifier);
-                _logger.LogInformation("GetCurrentUserAsync: Token validated for user {UserId}", userId);
-
-                var isTokenValid = await _tokenStorageService.IsTokenValidAsync(userId ?? string.Empty, token);
-                if (!isTokenValid)
-                {
-                    _logger.LogWarning("GetCurrentUserAsync: Token not found in storage for user {UserId}", userId);
-                    throw new AuthenticationException("Token has been revoked or not stored properly");
-                }
-
-                var user = await _userManager.GetUserAsync(validatedPrincipal);
-                if (user == null)
-                {
-                    _logger.LogWarning("GetCurrentUserAsync: User not found for ID {UserId}", userId);
-                    throw new UserRetrievalException("User account not found");
-                }
-
-                _logger.LogInformation("GetCurrentUserAsync: Successfully retrieved user {UserName}", user.UserName);
-
+                var user = await _userManager.GetUserAsync(loggedInUser) ?? throw new UserRetrievalException("User account not found");
                 var roles = await _userManager.GetRolesAsync(user);
 
                 return new UserDto
@@ -104,240 +68,77 @@ namespace Aptiverse.Application.Auth.Services
             }
         }
 
-        public async Task<TokenDto<UserDto>> RegisterUserAsync(RegisterDto registerDto)
+        public async Task RegisterUserAsync(RegisterDto registerDto)
+{
+    var user = _mapper.Map<User>(registerDto);
+    user.CreatedAt = DateTime.UtcNow;
+
+    var result = await _userManager.CreateAsync(user, registerDto.Password);
+
+    if (!result.Succeeded)
+    {
+        throw new UserRegistrationException($"User creation failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+    }
+
+    try
+    {
+        var roleCreationResult = await EntityRoleCreator.CreateRoleSpecificEntity(_dbContext, user.Id, registerDto.UserType);
+
+        if (!roleCreationResult.Succeeded)
         {
-            var user = _mapper.Map<User>(registerDto);
-            user.CreatedAt = DateTime.UtcNow;
-
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-            if (!result.Succeeded)
-            {
-                throw new UserRegistrationException($"User creation failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            }
-
-            try
-            {
-                var roleCreationResult = await EntityRoleCreator.CreateRoleSpecificEntity(_dbContext, user.Id, registerDto.UserType);
-
-                if (!roleCreationResult.Succeeded)
-                {
-                    await _userManager.DeleteAsync(user);
-                    throw new RoleAssignmentException($"Role creation failed: {roleCreationResult.Errors}");
-                }
-
-                var roleResult = await _userManager.AddToRoleAsync(user, registerDto.UserType);
-
-                if (!roleResult.Succeeded)
-                {
-                    _logger.LogWarning("Could not add user to role: {Errors}",
-                        string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-                }
-
-                var roles = await _userManager.GetRolesAsync(user);
-                var token = await _tokenProvider.GenerateJwtTokenAsync(user, roles);
-
-                var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                var confirmationLink = $"https://aptiverse.co.za/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(emailConfirmationToken)}";
-
-                var htmlMessage = $@"
-                    <!DOCTYPE html>
-                    <html lang='en'>
-                        <head>
-                            <meta charset='UTF-8'>
-                            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-                            <title>Confirm Your Email - Aptiverse</title>
-                            <style>
-                                body {{
-                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                                    line-height: 1.6;
-                                    color: #333;
-                                    margin: 0;
-                                    padding: 0;
-                                    background-color: #f4f4f4;
-                                }}
-                                .container {{
-                                    max-width: 600px;
-                                    margin: 0 auto;
-                                    background: #ffffff;
-                                    border-radius: 10px;
-                                    overflow: hidden;
-                                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                                }}
-                                .header {{
-                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                    color: white;
-                                    padding: 30px 20px;
-                                    text-align: center;
-                                }}
-                                .header h1 {{
-                                    margin: 0;
-                                    font-size: 28px;
-                                    font-weight: 300;
-                                }}
-                                .content {{
-                                    padding: 40px 30px;
-                                }}
-                                .welcome-text {{
-                                    font-size: 18px;
-                                    margin-bottom: 20px;
-                                    color: #555;
-                                }}
-                                .confirmation-button {{
-                                    display: inline-block;
-                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                    color: white;
-                                    padding: 15px 30px;
-                                    text-decoration: none;
-                                    border-radius: 25px;
-                                    font-weight: 600;
-                                    font-size: 16px;
-                                    margin: 20px 0;
-                                    transition: transform 0.2s, box-shadow 0.2s;
-                                }}
-                                .confirmation-button:hover {{
-                                    transform: translateY(-2px);
-                                    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
-                                }}
-                                .alternative-text {{
-                                    color: #666;
-                                    margin: 25px 0 15px 0;
-                                    font-size: 14px;
-                                }}
-                                .confirmation-link {{
-                                    background: #f8f9fa;
-                                    border: 1px solid #e9ecef;
-                                    border-radius: 5px;
-                                    padding: 15px;
-                                    word-break: break-all;
-                                    font-family: 'Courier New', monospace;
-                                    font-size: 12px;
-                                    color: #495057;
-                                }}
-                                .footer {{
-                                    background: #f8f9fa;
-                                    padding: 20px;
-                                    text-align: center;
-                                    color: #6c757d;
-                                    font-size: 12px;
-                                    border-top: 1px solid #e9ecef;
-                                }}
-                                .support-info {{
-                                    margin-top: 15px;
-                                    font-size: 14px;
-                                    color: #495057;
-                                }}
-                                .user-info {{
-                                    background: #e8f4fd;
-                                    border-left: 4px solid #2196F3;
-                                    padding: 15px;
-                                    margin: 20px 0;
-                                    border-radius: 4px;
-                                }}
-                                .steps {{
-                                    margin: 25px 0;
-                                }}
-                                .step {{
-                                    display: flex;
-                                    align-items: flex-start;
-                                    margin-bottom: 15px;
-                                }}
-                                .step-number {{
-                                background: #667eea;
-                                color: white;
-                                width: 24px;
-                                height: 24px;
-                                border-radius: 50%;
-                                display: inline-block; /* Change from flex */
-                                text-align: center;
-                                line-height: 24px; /* Match the height */
-                                font-size: 14px;
-                                font-weight: bold;
-                                margin-right: 15px;
-                                flex-shrink: 0;
-                                }}
-                            </style>
-                        </head>
-                        <body>
-                            <div class='container'>
-                                <div class='header'>
-                                    <h1>Welcome to Aptiverse! 🎉</h1>
-                                </div>
-        
-                                <div class='content'>
-                                    <p class='welcome-text'>Hello <strong>{user.FirstName} {user.LastName}</strong>,</p>
-                                    <p>Thank you for joining Aptiverse! We're excited to have you on board. To complete your registration and start using your account, please confirm your email address.</p>
-            
-                                    <div class='user-info'>
-                                        <strong>Account Details:</strong><br>
-                                        • Username: <strong>{user.UserName}</strong><br>
-                                        • Email: <strong>{user.Email}</strong><br>
-                                        • Account Type: <strong>{registerDto.UserType}</strong>
-                                    </div>
-
-                                    <div class='steps'>
-                                        <div class='step'>
-                                            <div class='step-number'>1</div>
-                                            <div>Click the confirmation button below</div>
-                                        </div>
-                                        <div class='step'>
-                                            <div class='step-number'>2</div>
-                                            <div>You'll be redirected to verify your email</div>
-                                        </div>
-                                        <div class='step'>
-                                            <div class='step-number'>3</div>
-                                            <div>Start exploring Aptiverse features!</div>
-                                        </div>
-                                    </div>
-
-                                    <div style='text-align: center;'>
-                                        <a href='{confirmationLink}' class='confirmation-button'>
-                                            Confirm My Email Address
-                                        </a>
-                                    </div>
-
-                                    <p class='alternative-text'>If the button doesn't work, copy and paste this URL into your browser:</p>
-                                    <div class='confirmation-link'>{confirmationLink}</div>
-
-                                    <div class='support-info'>
-                                        <p><strong>Need help?</strong><br>
-                                        If you didn't create this account or need assistance, please contact our support team immediately.</p>
-                                        <p>This confirmation link will expire in 24 hours for security reasons.</p>
-                                    </div>
-                                </div>
-        
-                                <div class='footer'>
-                                    <p>&copy; {DateTime.UtcNow.Year} Aptiverse. All rights reserved.</p>
-                                    <p>This is an automated message, please do not reply to this email.</p>
-                                </div>
-                            </div>
-                        </body>
-                    </html>";
-
-                await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Confirm Your Email - Aptiverse", htmlMessage);
-
-                return new TokenDto<UserDto>
-                {
-                    Token = token,
-                    Expires = DateTime.Now.AddHours(Convert.ToDouble(_config["Jwt:ExpireHours"] ?? "4")),
-                    User = new UserDto
-                    {
-                        Id = user.Id,
-                        UserName = user.UserName,
-                        Email = user.Email,
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                    },
-                    Message = $"User registered successfully as {registerDto.UserType}. Please check your email to confirm your account."
-                };
-            }
-            catch (Exception ex) when (ex is not UserRegistrationException and not RoleAssignmentException)
-            {
-                await _userManager.DeleteAsync(user);
-                throw new UserRegistrationException("An unexpected error occurred during user registration", ex);
-            }
+            await _userManager.DeleteAsync(user);
+            throw new RoleAssignmentException($"Role creation failed: {roleCreationResult.Errors}");
         }
+
+        var roleResult = await _userManager.AddToRoleAsync(user, registerDto.UserType);
+
+        if (!roleResult.Succeeded)
+        {
+            _logger.LogWarning("Could not add user to role: {Errors}",
+                string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+        }
+
+        switch (registerDto.UserType.ToLower())
+        {
+            case "student":
+                await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $@"INSERT INTO ""Students"".""Students"" (""UserId"", ""AdminId"", ""Grade"") 
+       VALUES ({user.Id}, {registerDto.AdminId}, {registerDto.Grade})");
+                break;
+            case "tutor":
+                await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $@"INSERT INTO ""Tutors"".""Tutors"" (""UserId"", ""CreatedAt"") 
+       VALUES ({user.Id}, {DateTime.UtcNow})");
+                break;
+            default:
+                break;
+        }
+
+        var emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var confirmationLink = $"https://aptiverse.co.za/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(emailConfirmationToken)}";
+        
+        var templateData = new
+        {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            UserName = user.UserName,
+            Email = user.Email,
+            UserType = registerDto.UserType,
+            ConfirmationLink = confirmationLink
+        };
+
+        await _emailSender.SendTemplateEmailAsync(
+            user.Email ?? string.Empty, 
+            "Confirm Your Email - Aptiverse", 
+            "email_confirmation", 
+            templateData);
+    }
+    catch (Exception ex) when (ex is not UserRegistrationException and not RoleAssignmentException)
+    {
+        await _userManager.DeleteAsync(user);
+        throw new UserRegistrationException("An unexpected error occurred during user registration", ex);
+    }
+}
 
         public async Task<TokenDto<UserDto>> LoginUserAsync(LoginDto dto)
         {
@@ -684,6 +485,21 @@ namespace Aptiverse.Application.Auth.Services
             catch
             {
                 return false;
+            }
+        }
+
+        public async Task ConfirmEmail(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId) ?? throw new Exception("User not found");
+            var decodedToken = Uri.UnescapeDataString(token);
+
+            try
+            {
+                await _userManager.ConfirmEmailAsync(user, decodedToken);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Email confirmation failed", ex);
             }
         }
     }

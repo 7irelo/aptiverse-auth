@@ -24,8 +24,8 @@ namespace Aptiverse.Auth.Controllers
         {
             try
             {
-                var result = await _authService.RegisterUserAsync(registerDto);
-                return Ok(result);
+                await _authService.RegisterUserAsync(registerDto);
+                return Ok(200);
             }
             catch (UserRegistrationException ex)
             {
@@ -292,6 +292,25 @@ namespace Aptiverse.Auth.Controllers
                 return StatusCode(500, new
                 {
                     message = "An unexpected error occurred while retrieving user information",
+                    type = "ServerError"
+                });
+            }
+        }
+
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, [FromQuery] string token)
+        {
+            try
+            {
+                await _authService.ConfirmEmail(userId, token);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while confirming email");
+                return StatusCode(500, new
+                {
+                    message = "An unexpected error occurred while confirming email",
                     type = "ServerError"
                 });
             }

@@ -7,6 +7,8 @@
         string FirstName,
         string LastName,
         string UserType,
+        string? AdminId,
+        int? Grade,
         string? PhoneNumber = null
     );
 }

@@ -1,4 +1,5 @@
-﻿using Aptiverse.Application.Users.Dtos;
+﻿using Aptiverse.Application.Auth.Dtos;
+using Aptiverse.Application.Users.Dtos;
 using Aptiverse.Application.Users.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,18 +8,18 @@ namespace Aptiverse.Auth.Controllers
 {
     [ApiController]
     [Route("api/users")]
-    public class UsersController(IUserService userService, ILogger<StudentsController> logger) : ControllerBase
+    public class UsersController(IUserService userService, ILogger<UsersController> logger) : ControllerBase
     {
         private readonly IUserService _userService = userService;
-        private readonly ILogger<StudentsController> _logger = logger;
+        private readonly ILogger<UsersController> _logger = logger;
 
         [HttpPost]
         [Authorize(Roles = "Admin,Superuser")]
-        public async Task<IActionResult> CreateUser([FromBody] UserDto user)
+        public async Task<IActionResult> CreateUser([FromBody] RegisterDto registerDto)
         {
             try
             {
-                var result = await _userService.CreateUserAsync(user);
+                var result = await _userService.CreateUserAsync(registerDto);
                 return CreatedAtAction(nameof(GetOneUser), new { id = result.Id }, result);
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
