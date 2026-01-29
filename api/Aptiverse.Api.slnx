@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/Aptiverse.Api.Application/Aptiverse.Api.Application.csproj" Id="94e4dd0a-c5ed-4126-bd03-f543130e7bcb" />
+  <Project Path="src/Aptiverse.Api.Core/Aptiverse.Api.Core.csproj" Id="07ccf00a-8003-45a9-b7e4-ad211f8732a5" />
+  <Project Path="src/Aptiverse.Api.Domain/Aptiverse.Api.Domain.csproj" Id="b8b2c4fb-25fe-47a7-b98c-a36740ab035b" />
+  <Project Path="src/Aptiverse.Api.Infrastructure/Aptiverse.Api.Infrastructure.csproj" Id="35fb9521-08c2-4800-ab64-2f16f1778e23" />
+  <Project Path="src/Aptiverse.Api/Aptiverse.Api.csproj" Id="19ec7e49-a7ac-42a4-9f34-cd9d7ae2c193" />
+</Solution>
