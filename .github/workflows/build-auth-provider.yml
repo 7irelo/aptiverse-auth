@@ -1,8 +1,10 @@
-name: Build Auth Provider
+name: CI / Build Auth Provider
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
