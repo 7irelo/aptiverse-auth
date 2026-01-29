@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "dgSpecHash": "gvXol7BRhkY=",
+  "success": true,
+  "projectFilePath": "C:\\Dev\\aptiverse\\aptiverse-auth\\api\\src\\Aptiverse.Api\\Aptiverse.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\EricN\\.nuget\\packages\\aspnetcore.healthchecks.redis\\9.0.0\\aspnetcore.healthchecks.redis.9.0.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\automapper\\15.1.0\\automapper.15.1.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.aspnetcore.authentication.google\\10.0.0\\microsoft.aspnetcore.authentication.google.10.0.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\10.0.0\\microsoft.aspnetcore.authentication.jwtbearer.10.0.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.aspnetcore.authentication.microsoftaccount\\10.0.0\\microsoft.aspnetcore.authentication.microsoftaccount.10.0.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.aspnetcore.authentication.oauth\\2.3.0\\microsoft.aspnetcore.authentication.oauth.2.3.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.0\\microsoft.aspnetcore.openapi.10.0.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.entityframeworkcore\\9.0.1\\microsoft.entityframeworkcore.9.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\9.0.1\\microsoft.entityframeworkcore.abstractions.9.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\9.0.1\\microsoft.entityframeworkcore.analyzers.9.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\9.0.1\\microsoft.entityframeworkcore.relational.9.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.extensions.caching.stackexchangeredis\\9.0.1\\microsoft.extensions.caching.stackexchangeredis.9.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.identitymodel.abstractions\\8.14.0\\microsoft.identitymodel.abstractions.8.14.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.identitymodel.jsonwebtokens\\8.14.0\\microsoft.identitymodel.jsonwebtokens.8.14.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.identitymodel.logging\\8.14.0\\microsoft.identitymodel.logging.8.14.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.identitymodel.protocols\\8.0.1\\microsoft.identitymodel.protocols.8.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.identitymodel.protocols.openidconnect\\8.0.1\\microsoft.identitymodel.protocols.openidconnect.8.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.identitymodel.tokens\\8.14.0\\microsoft.identitymodel.tokens.8.14.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\microsoft.visualstudio.azure.containers.tools.targets\\1.23.0\\microsoft.visualstudio.azure.containers.tools.targets.1.23.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\newtonsoft.json\\11.0.2\\newtonsoft.json.11.0.2.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\npgsql\\9.0.3\\npgsql.9.0.3.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\9.0.4\\npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\pipelines.sockets.unofficial\\2.2.8\\pipelines.sockets.unofficial.2.2.8.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\scalar.aspnetcore\\2.11.0\\scalar.aspnetcore.2.11.0.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\stackexchange.redis\\2.10.1\\stackexchange.redis.2.10.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\swashbuckle.aspnetcore.redoc\\10.0.1\\swashbuckle.aspnetcore.redoc.10.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\system.identitymodel.tokens.jwt\\8.0.1\\system.identitymodel.tokens.jwt.8.0.1.nupkg.sha512",
+    "C:\\Users\\EricN\\.nuget\\packages\\system.io.hashing\\9.0.10\\system.io.hashing.9.0.10.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference Microsoft.AspNetCore.Authentication.OAuth will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "projectPath": "C:\\Dev\\aptiverse\\aptiverse-auth\\api\\src\\Aptiverse.Api\\Aptiverse.Api.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Dev\\aptiverse\\aptiverse-auth\\api\\src\\Aptiverse.Api\\Aptiverse.Api.csproj",
+      "libraryId": "Microsoft.AspNetCore.Authentication.OAuth",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Newtonsoft.Json' 11.0.2 has a known high severity vulnerability, https://github.com/advisories/GHSA-5crp-9r3c-p9vr",
+      "projectPath": "C:\\Dev\\aptiverse\\aptiverse-auth\\api\\src\\Aptiverse.Api\\Aptiverse.Api.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Dev\\aptiverse\\aptiverse-auth\\api\\src\\Aptiverse.Api\\Aptiverse.Api.csproj",
+      "libraryId": "Newtonsoft.Json",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}

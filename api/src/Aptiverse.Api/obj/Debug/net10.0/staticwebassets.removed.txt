@@ -1,0 +1,1 @@
+C:\Dev\aptiverse\aptiverse-api\src\Aptiverse.Api\wwwroot\index.html
