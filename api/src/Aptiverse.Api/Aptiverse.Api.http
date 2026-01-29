@@ -1,6 +1,0 @@
-@Aptiverse.Api_HostAddress = http://localhost:5196
-
-GET {{Aptiverse.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

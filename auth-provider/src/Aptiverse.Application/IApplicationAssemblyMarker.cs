@@ -1,1 +1,0 @@
-﻿namespace Aptiverse.Application { public interface IApplicationAssemblyMarker { } }

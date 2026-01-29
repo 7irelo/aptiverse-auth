@@ -1,6 +1,0 @@
-@Aptiverse.Auth_HostAddress = http://localhost:5006
-
-GET {{Aptiverse.Auth_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

@@ -1,2 +1,0 @@
-C:\Dev\aptiverse\aptiverse-auth\src\Aptiverse.Auth\wwwroot\index.html
-wwwroot\index.html
